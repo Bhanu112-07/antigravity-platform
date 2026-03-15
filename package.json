@@ -1,0 +1,18 @@
+{
+  "name": "antigravity-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "antigravity-frontend",
+    "antigravity-backend"
+  ],
+  "scripts": {
+    "install:all": "npm install",
+    "dev:frontend": "npm run dev -w antigravity-frontend",
+    "dev:backend": "npm run dev -w antigravity-backend",
+    "build:frontend": "npm run build -w antigravity-frontend",
+    "build:backend": "npm run build -w antigravity-backend",
+    "start:frontend": "npm run start -w antigravity-frontend",
+    "start:backend": "npm run start -w antigravity-backend"
+  }
+}

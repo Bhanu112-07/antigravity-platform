@@ -1,9 +1,10 @@
 "use client";
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import ProductCard from '@/components/ProductCard';
+import { API_BASE_URL } from '@/lib/api';
 
-export default function ProductsPage() {
+function ProductsContent() {
   const searchParams = useSearchParams();
   const categoryParam = searchParams.get('category');
   
@@ -13,8 +14,8 @@ export default function ProductsPage() {
   useEffect(() => {
     // Fetch from backend
     const endpoint = categoryParam 
-      ? `http://localhost:5000/api/products?category=${categoryParam}`
-      : 'http://localhost:5000/api/products';
+      ? `${API_BASE_URL}/api/products?category=${categoryParam}`
+      : `${API_BASE_URL}/api/products`;
       
     fetch(endpoint)
       .then(res => res.json())
@@ -88,5 +89,13 @@ export default function ProductsPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function ProductsPage() {
+  return (
+    <Suspense fallback={<div className="container mx-auto px-4 py-12 min-h-screen flex items-center justify-center animate-pulse">Loading collection...</div>}>
+      <ProductsContent />
+    </Suspense>
   );
 }

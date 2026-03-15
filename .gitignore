@@ -1,0 +1,41 @@
+# Node
+node_modules/
+npm-debug.log
+yarn-error.log
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Next.js
+.next/
+out/
+build/
+
+# SQLite
+*.sqlite
+*.sqlite-journal
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Backend Build
+antigravity-backend/dist/
+antigravity-backend/uploads/
+
+# Temporary files
+migrate_orders_id.ts
+migrate_shiprocket.ts
+test_shiprocket_login.js
+migrate-images.ts
+migrate.ts
+seed.ts

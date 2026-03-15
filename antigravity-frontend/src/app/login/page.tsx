@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect } from 'react';
+import { API_BASE_URL } from '@/lib/api';
 import Link from 'next/link';
 
 export default function LoginPage() {
@@ -11,7 +12,19 @@ export default function LoginPage() {
   }, []);
 
   const [isLogin, setIsLogin] = useState(true);
-  const [formData, setFormData] = useState({ name: '', email: '', password: '' });
+  const [formData, setFormData] = useState({ name: '', email: '', password: '', phone: '', countryCode: '+91' });
+
+  const COUNTRY_CODES = [
+    { code: '+91', name: 'India' },
+    { code: '+1', name: 'USA/Canada' },
+    { code: '+44', name: 'UK' },
+    { code: '+61', name: 'Australia' },
+    { code: '+971', name: 'UAE' },
+    { code: '+65', name: 'Singapore' },
+    { code: '+49', name: 'Germany' },
+    { code: '+33', name: 'France' },
+    { code: '+81', name: 'Japan' },
+  ];
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -22,11 +35,25 @@ export default function LoginPage() {
 
     try {
       const endpoint = isLogin ? '/api/auth/login' : '/api/auth/register';
-      const url = `http://localhost:5000${endpoint}`;
+      const url = `${API_BASE_URL}${endpoint}`;
       
       const payload = isLogin 
         ? { email: formData.email, password: formData.password } 
-        : { name: formData.name, email: formData.email, password: formData.password };
+        : { name: formData.name, email: formData.email, password: formData.password, phone: formData.phone ? (formData.countryCode + formData.phone) : '' };
+
+      if (!isLogin && formData.phone) {
+        const combinedPhone = formData.countryCode + formData.phone;
+        const cleanedPhone = combinedPhone.replace(/\D/g, '');
+        const phoneRegex = /^\+[0-9]{11,15}$/;
+        
+        if (cleanedPhone.length < 11 || cleanedPhone.length > 15 || !phoneRegex.test(combinedPhone)) {
+          throw new Error('Please enter a valid phone number');
+        }
+
+        if (formData.countryCode === '+91' && !/^[6-9]/.test(formData.phone)) {
+          throw new Error('Indian mobile numbers must start with 6, 7, 8, or 9');
+        }
+      }
         
       const res = await fetch(url, {
         method: 'POST',
@@ -97,16 +124,42 @@ export default function LoginPage() {
 
           <form onSubmit={handleSubmit} className="space-y-5">
             {!isLogin && (
-              <div className="animate-in fade-in slide-in-from-top-4 duration-300">
-                <label className="block text-xs font-bold text-white/60 uppercase tracking-widest mb-2">Full Name</label>
-                <input 
-                  type="text" 
-                  required={!isLogin}
-                  className="w-full bg-black/50 border border-white/10 text-white rounded-lg p-3.5 focus:border-purple-500 focus:ring-1 focus:ring-purple-500 outline-none transition-all placeholder:text-white/20" 
-                  placeholder="John Doe"
-                  value={formData.name}
-                  onChange={(e) => setFormData({...formData, name: e.target.value})}
-                />
+              <div className="space-y-5 animate-in fade-in slide-in-from-top-4 duration-300">
+                <div>
+                  <label className="block text-xs font-bold text-white/60 uppercase tracking-widest mb-2">Full Name</label>
+                  <input 
+                    type="text" 
+                    required={!isLogin}
+                    className="w-full bg-black/50 border border-white/10 text-white rounded-lg p-3.5 focus:border-purple-500 focus:ring-1 focus:ring-purple-500 outline-none transition-all placeholder:text-white/20" 
+                    placeholder="John Doe"
+                    value={formData.name}
+                    onChange={(e) => setFormData({...formData, name: e.target.value})}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-white/60 uppercase tracking-widest mb-2">Phone Number (Optional)</label>
+                  <div className="flex gap-2">
+                    <select 
+                      value={formData.countryCode}
+                      onChange={(e) => setFormData({...formData, countryCode: e.target.value})}
+                      className="bg-black/50 border border-white/10 text-white rounded-lg p-3.5 focus:border-purple-500 outline-none transition-all w-28 text-sm"
+                    >
+                      {COUNTRY_CODES.map(c => (
+                        <option key={c.code} value={c.code}>{c.code}</option>
+                      ))}
+                    </select>
+                    <input 
+                      type="tel"
+                      className="flex-grow bg-black/50 border border-white/10 text-white rounded-lg p-3.5 focus:border-purple-500 focus:ring-1 focus:ring-purple-500 outline-none transition-all placeholder:text-white/20" 
+                      placeholder="00000 00000"
+                      value={formData.phone}
+                      onChange={(e) => {
+                        const cleaned = e.target.value.replace(/\D/g, '');
+                        setFormData({...formData, phone: cleaned});
+                      }}
+                    />
+                  </div>
+                </div>
               </div>
             )}
             

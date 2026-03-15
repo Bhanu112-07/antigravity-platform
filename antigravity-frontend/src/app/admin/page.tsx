@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect } from 'react';
+import { API_BASE_URL } from '@/lib/api';
 
 // Icons
 const DashboardIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>;
@@ -41,25 +42,25 @@ export default function AdminDashboard() {
       setError('');
       
       if (activeTab === 'dashboard') {
-        const statsRes = await fetch('http://localhost:5000/api/admin/stats', { headers: getAuthHeaders() });
+        const statsRes = await fetch(`${API_BASE_URL}/api/admin/stats`, { headers: getAuthHeaders() });
         if (statsRes.ok) {
           const statsData = await statsRes.json();
           setStats(statsData);
         }
         
-        const ordersRes = await fetch('http://localhost:5000/api/admin/orders', { headers: getAuthHeaders() });
+        const ordersRes = await fetch(`${API_BASE_URL}/api/admin/orders`, { headers: getAuthHeaders() });
         if (ordersRes.ok) {
           const ordersData = await ordersRes.json();
           setOrders(ordersData);
         }
       } else if (activeTab === 'products') {
-        const prodRes = await fetch('http://localhost:5000/api/products');
+        const prodRes = await fetch(`${API_BASE_URL}/api/products`);
         if (prodRes.ok) {
           const prodData = await prodRes.json();
           setProducts(prodData);
         }
       } else if (activeTab === 'orders') {
-        const ordersRes = await fetch('http://localhost:5000/api/admin/orders', { headers: getAuthHeaders() });
+        const ordersRes = await fetch(`${API_BASE_URL}/api/admin/orders`, { headers: getAuthHeaders() });
         if (ordersRes.ok) {
           const ordersData = await ordersRes.json();
           setOrders(ordersData);
@@ -67,7 +68,7 @@ export default function AdminDashboard() {
           setError('Failed to fetch orders. Make sure you are an admin.');
         }
       } else if (activeTab === 'categories') {
-        const catRes = await fetch('http://localhost:5000/api/admin/categories', { headers: getAuthHeaders() });
+        const catRes = await fetch(`${API_BASE_URL}/api/admin/categories`, { headers: getAuthHeaders() });
         if (catRes.ok) {
           const catData = await catRes.json();
           setCategories(catData);
@@ -90,9 +91,9 @@ export default function AdminDashboard() {
     window.location.href = '/login';
   };
 
-  const handleOrderStatusUpdate = async (orderId: number, status: string) => {
+  const handleOrderStatusUpdate = async (orderId: string, status: string) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/admin/orders/${orderId}/status`, {
+      const res = await fetch(`${API_BASE_URL}/api/admin/orders/${orderId}/status`, {
         method: 'PUT',
         headers: getAuthHeaders(),
         body: JSON.stringify({ status })
@@ -100,7 +101,8 @@ export default function AdminDashboard() {
       if (res.ok) {
         fetchDashboardData();
       } else {
-        alert('Failed to update status');
+        const errorData = await res.json();
+        alert('Failed to update status: ' + (errorData.error || 'Unknown error'));
       }
     } catch (err) {
       alert('Error updating status');
@@ -112,8 +114,8 @@ export default function AdminDashboard() {
     try {
       const method = editingProduct ? 'PUT' : 'POST';
       const url = editingProduct 
-        ? `http://localhost:5000/api/products/${editingProduct.id}` 
-        : 'http://localhost:5000/api/products';
+        ? `${API_BASE_URL}/api/products/${editingProduct.id}` 
+        : `${API_BASE_URL}/api/products`;
       
       const formData = new FormData();
       formData.append('name', productForm.name);
@@ -168,7 +170,7 @@ export default function AdminDashboard() {
   const handleCategorySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const res = await fetch('http://localhost:5000/api/admin/categories', {
+      const res = await fetch(`${API_BASE_URL}/api/admin/categories`, {
         method: 'POST',
         headers: getAuthHeaders(),
         body: JSON.stringify(categoryForm)
@@ -189,7 +191,7 @@ export default function AdminDashboard() {
   const handleDeleteCategory = async (id: number) => {
     if (!confirm('Are you sure? Products in this category will remain, but the category itself will be gone.')) return;
     try {
-      const res = await fetch(`http://localhost:5000/api/admin/categories/${id}`, {
+      const res = await fetch(`${API_BASE_URL}/api/admin/categories/${id}`, {
         method: 'DELETE',
         headers: getAuthHeaders()
       });
@@ -226,7 +228,7 @@ export default function AdminDashboard() {
   const handleDeleteProduct = async (id: number) => {
     if (!confirm('Are you sure you want to delete this product?')) return;
     try {
-      const res = await fetch(`http://localhost:5000/api/products/${id}`, {
+      const res = await fetch(`${API_BASE_URL}/api/products/${id}`, {
         method: 'DELETE',
         headers: getAuthHeaders()
       });
@@ -240,10 +242,10 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleDeleteOrder = async (id: number) => {
+  const handleDeleteOrder = async (id: string) => {
     if (!confirm('Are you sure you want to delete this order?')) return;
     try {
-      const res = await fetch(`http://localhost:5000/api/admin/orders/${id}`, {
+      const res = await fetch(`${API_BASE_URL}/api/admin/orders/${id}`, {
         method: 'DELETE',
         headers: getAuthHeaders()
       });
@@ -255,6 +257,26 @@ export default function AdminDashboard() {
       }
     } catch (err) {
       alert('Error deleting order');
+    }
+  };
+
+  const handleShipRocket = async (orderId: string) => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/admin/orders/${orderId}/ship`, {
+        method: 'POST',
+        headers: getAuthHeaders()
+      });
+      if (res.ok) {
+        const data = await res.json();
+        alert('Order successfully pushed to Shiprocket! Order ID: ' + data.shiprocketOrder.order_id);
+        fetchDashboardData();
+        setSelectedOrder(null);
+      } else {
+        const data = await res.json();
+        alert(data.error || 'Failed to ship via Shiprocket');
+      }
+    } catch (err) {
+      alert('Error connecting to Shiprocket service');
     }
   };
 
@@ -684,6 +706,19 @@ export default function AdminDashboard() {
                           </div>
                         </div>
 
+                        {selectedOrder.shiprocket_order_id && (
+                          <div className="bg-cyan-500/10 border border-cyan-500/30 p-4 rounded-xl flex justify-between items-center">
+                            <div>
+                              <p className="text-[10px] text-cyan-400 font-bold uppercase tracking-widest mb-1">Shiprocket Sync Active</p>
+                              <p className="text-sm font-mono">Order ID: <span className="text-white">{selectedOrder.shiprocket_order_id}</span></p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-[10px] text-white/40 uppercase tracking-tighter">Shipment ID</p>
+                              <p className="text-xs font-mono text-white/70">{selectedOrder.shiprocket_shipment_id}</p>
+                            </div>
+                          </div>
+                        )}
+
                         {/* Order Items */}
                         <div>
                           <p className="text-white/40 text-xs font-bold uppercase tracking-widest mb-4">Line Items</p>
@@ -752,6 +787,14 @@ export default function AdminDashboard() {
                       </div>
                       
                       <div className="p-6 bg-white/5 border-t border-white/10 flex justify-end gap-4">
+                        {!selectedOrder.shiprocket_order_id && (
+                          <button 
+                            onClick={() => handleShipRocket(selectedOrder.id)}
+                            className="px-6 py-2 bg-gradient-to-r from-purple-600 to-cyan-600 text-white rounded-lg font-black uppercase tracking-widest text-xs hover:opacity-90 shadow-[0_0_15px_rgba(168,85,247,0.3)] transition-all"
+                          >
+                            Ship with Shiprocket
+                          </button>
+                        )}
                         <button 
                           onClick={() => setSelectedOrder(null)}
                           className="px-6 py-2 border border-white/20 rounded-lg font-bold uppercase tracking-widest text-xs hover:bg-white/5 transition-colors"

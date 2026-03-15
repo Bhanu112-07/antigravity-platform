@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect } from 'react';
+import { API_BASE_URL } from '@/lib/api';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
@@ -18,8 +19,22 @@ export default function CheckoutPage() {
     address: '',
     city: '',
     pinCode: '',
+    countryCode: '+91',
     paymentMethod: 'UPI'
   });
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const COUNTRY_CODES = [
+    { code: '+91', name: 'India' },
+    { code: '+1', name: 'USA/Canada' },
+    { code: '+44', name: 'UK' },
+    { code: '+61', name: 'Australia' },
+    { code: '+971', name: 'UAE' },
+    { code: '+65', name: 'Singapore' },
+    { code: '+49', name: 'Germany' },
+    { code: '+33', name: 'France' },
+    { code: '+81', name: 'Japan' },
+  ];
 
   useEffect(() => {
     const savedCart = JSON.parse(localStorage.getItem('ag_cart') || '[]');
@@ -39,8 +54,17 @@ export default function CheckoutPage() {
 
   const orderTotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
+    if (name === 'phone') {
+      const cleaned = value.replace(/\D/g, ''); // Fix: only digits for the body of the phone number
+      setFormData(prev => ({ ...prev, [name]: cleaned }));
+      if (errors.phone) setErrors(prev => ({ ...prev, phone: '' }));
+      return;
+    }
+    if (name === 'email' && errors.email) {
+      setErrors(prev => ({ ...prev, email: '' }));
+    }
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
@@ -52,9 +76,26 @@ export default function CheckoutPage() {
       return;
     }
 
+    const combinedPhone = formData.countryCode + formData.phone;
+    const cleanedPhone = combinedPhone.replace(/\D/g, '');
+    const phoneRegex = /^\+[0-9]{11,15}$/; 
+    
+    if (cleanedPhone.length < 11 || cleanedPhone.length > 15 || !phoneRegex.test(combinedPhone)) {
+      alert('Please enter a valid phone number');
+      setStep(1);
+      return;
+    }
+
+    // Indian number specific validation: first digit after +91 must be 6-9
+    if (formData.countryCode === '+91' && !/^[6-9]/.test(formData.phone)) {
+      alert('Indian mobile numbers must start with 6, 7, 8, or 9');
+      setStep(1);
+      return;
+    }
+
     setLoading(true);
     try {
-      const response = await fetch('http://localhost:5000/api/orders', {
+      const response = await fetch(`${API_BASE_URL}/api/orders`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -65,7 +106,7 @@ export default function CheckoutPage() {
           total_amount: orderTotal,
           customer_name: `${formData.firstName} ${formData.lastName}`,
           customer_email: formData.email,
-          customer_phone: formData.phone,
+          customer_phone: formData.countryCode + formData.phone,
           shipping_address: formData.address,
           city: formData.city,
           pin_code: formData.pinCode,
@@ -142,22 +183,61 @@ export default function CheckoutPage() {
                       name="email"
                       value={formData.email}
                       onChange={handleInputChange}
-                      className="w-full bg-black/50 border border-white/10 rounded-lg p-3 focus:border-purple-500 focus:ring-1 focus:ring-purple-500 outline-none transition-all" 
+                      className={`w-full bg-black/50 border ${errors.email ? 'border-red-500' : 'border-white/10'} rounded-lg p-3 focus:border-purple-500 focus:ring-1 focus:ring-purple-500 outline-none transition-all`} 
                       placeholder="you@example.com" 
                     />
+                    {errors.email && <p className="text-red-500 text-xs mt-1 font-bold">{errors.email}</p>}
                   </div>
                   <div>
                     <label className="block text-sm text-white/60 mb-2">Phone Number</label>
-                    <input 
-                      type="tel" 
-                      name="phone"
-                      value={formData.phone}
-                      onChange={handleInputChange}
-                      className="w-full bg-black/50 border border-white/10 rounded-lg p-3 focus:border-purple-500 focus:ring-1 focus:ring-purple-500 outline-none transition-all" 
-                      placeholder="+91" 
-                    />
+                    <div className="flex gap-2">
+                      <select 
+                        name="countryCode"
+                        value={formData.countryCode}
+                        onChange={handleInputChange}
+                        className="bg-black/50 border border-white/10 text-white rounded-lg p-3 focus:border-purple-500 outline-none transition-all w-32"
+                      >
+                        {COUNTRY_CODES.map(c => (
+                          <option key={c.code} value={c.code}>{c.code} ({c.name})</option>
+                        ))}
+                      </select>
+                      <input 
+                        type="tel" 
+                        name="phone"
+                        value={formData.phone}
+                        onChange={handleInputChange}
+                        required
+                        placeholder="0000000000"
+                        className={`flex-grow bg-black/50 border ${errors.phone ? 'border-red-500' : 'border-white/10'} rounded-lg p-3 focus:border-purple-500 focus:ring-1 focus:ring-purple-500 outline-none transition-all`} 
+                      />
+                    </div>
+                    {errors.phone && <p className="text-red-500 text-xs mt-1 font-bold">{errors.phone}</p>}
                   </div>
-                  <button onClick={() => setStep(2)} className="w-full mt-6 bg-white text-black font-black uppercase tracking-widest py-4 rounded-lg hover:bg-gray-200 transition-colors shadow-[0_0_20px_rgba(255,255,255,0.2)]">
+                  <button 
+                    onClick={() => {
+                      const newErrors: Record<string, string> = {};
+                      const combinedPhone = formData.countryCode + formData.phone;
+                      const cleanedPhone = combinedPhone.replace(/\D/g, '');
+                      const phoneRegex = /^\+[0-9]{11,15}$/;
+                      
+                      if (cleanedPhone.length < 11 || cleanedPhone.length > 15 || !phoneRegex.test(combinedPhone)) {
+                        newErrors.phone = 'Please enter a valid phone number';
+                      } else if (formData.countryCode === '+91' && !/^[6-9]/.test(formData.phone)) {
+                        newErrors.phone = 'Indian numbers must start with 6-9';
+                      }
+                      if (!formData.email || !formData.email.includes('@')) {
+                        newErrors.email = 'Please enter a valid email address';
+                      }
+
+                      if (Object.keys(newErrors).length > 0) {
+                        setErrors(newErrors);
+                        return;
+                      }
+                      
+                      setStep(2);
+                    }} 
+                    className="w-full mt-6 bg-white text-black font-black uppercase tracking-widest py-4 rounded-lg hover:bg-gray-200 transition-colors shadow-[0_0_20px_rgba(255,255,255,0.2)]"
+                  >
                     Continue to Shipping
                   </button>
                 </div>

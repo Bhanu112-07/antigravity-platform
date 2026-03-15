@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import ProductCard from '@/components/ProductCard';
+import { API_BASE_URL, resolveImageUrl } from '@/lib/api';
 
 export default function Home() {
   const [featuredProducts, setFeaturedProducts] = useState<any[]>([]);
@@ -12,7 +13,7 @@ export default function Home() {
   const [isAdding, setIsAdding] = useState(false);
 
   useEffect(() => {
-    fetch('http://localhost:5000/api/products')
+    fetch(`${API_BASE_URL}/api/products`)
       .then(res => res.json())
       .then(data => {
         setFeaturedProducts(data.slice(0, 4));
@@ -44,10 +45,6 @@ export default function Home() {
     }, 1000);
   };
 
-  const resolveImageUrl = (url: string) => {
-    if (!url) return '';
-    return url.startsWith('http') ? url : `http://localhost:5000${url.startsWith('/') ? '' : '/'}${url}`;
-  };
 
   return (
     <div className="flex flex-col min-h-screen bg-black">

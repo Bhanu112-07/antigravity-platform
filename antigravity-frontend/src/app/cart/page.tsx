@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect } from 'react';
+import { resolveImageUrl } from '@/lib/api';
 import Link from 'next/link';
 
 export default function CartPage() {
@@ -58,7 +59,7 @@ export default function CartPage() {
                 <div key={index} className="flex gap-4 bg-white/5 border border-white/10 rounded-xl p-4 items-center">
                   <div className="w-20 h-24 bg-black rounded-lg overflow-hidden flex-shrink-0">
                     <img 
-                      src={item.image_url.startsWith('http') ? item.image_url : `http://localhost:5000${item.image_url.startsWith('/') ? '' : '/'}${item.image_url}`} 
+                      src={resolveImageUrl(item.image_url)} 
                       alt={item.name} 
                       className="w-full h-full object-cover" 
                     />

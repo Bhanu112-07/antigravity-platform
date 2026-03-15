@@ -1,6 +1,7 @@
 import express from 'express';
 import { getDb } from '../db';
 import { authenticateAdmin } from '../middleware/auth';
+import { ShiprocketService } from '../services/shiprocket';
 
 const router = express.Router();
 
@@ -62,6 +63,63 @@ router.delete('/orders/:id', authenticateAdmin, async (req, res) => {
     res.json({ message: 'Order deleted successfully' });
   } catch (err) {
     res.status(500).json({ error: 'Error deleting order' });
+  }
+});
+
+// Ship Order via Shiprocket
+router.post('/orders/:id/ship', authenticateAdmin, async (req, res) => {
+  try {
+    const db = await getDb();
+    const order = await db.get('SELECT * FROM orders WHERE id = ?', [req.params.id]);
+
+    if (!order) {
+      return res.status(404).json({ error: 'Order not found' });
+    }
+
+    if (order.shiprocket_order_id) {
+      return res.status(400).json({ error: 'Order already shipped via Shiprocket' });
+    }
+
+    const items = JSON.parse(order.items);
+    const orderItems = items.map((item: any) => ({
+      name: item.name,
+      sku: String(item.id || item.name).substring(0, 50),
+      units: item.quantity,
+      selling_price: item.price
+    }));
+
+    const shiprocketOrder = await ShiprocketService.createOrder({
+      order_id: order.id,
+      order_date: new Date(order.created_at).toISOString().split('T')[0],
+      pickup_location: process.env.SHIPROCKET_PICKUP_LOCATION || 'Primary',
+      billing_customer_name: order.customer_name.split(' ')[0] || 'Customer',
+      billing_last_name: order.customer_name.split(' ').slice(1).join(' ') || '.',
+      billing_address: order.shipping_address,
+      billing_city: order.city,
+      billing_pincode: order.pin_code,
+      billing_state: 'India', // Usually required, but placeholders used
+      billing_country: 'India',
+      billing_email: order.customer_email,
+      billing_phone: order.customer_phone.replace('+', ''), // Shiprocket usually wants just digits
+      shipping_is_billing: true,
+      order_items: orderItems,
+      payment_method: order.payment_method === 'COD' ? 'COD' : 'Prepaid',
+      sub_total: order.total_amount,
+      length: 10,
+      breadth: 10,
+      height: 10,
+      weight: 0.5
+    });
+
+    await db.run(
+      'UPDATE orders SET shiprocket_order_id = ?, shiprocket_shipment_id = ?, status = ? WHERE id = ?',
+      [shiprocketOrder.order_id, shiprocketOrder.shipment_id, 'shipped', order.id]
+    );
+
+    res.json({ message: 'Order shipped via Shiprocket', shiprocketOrder });
+  } catch (err: any) {
+    console.error('Shiprocket Error:', err);
+    res.status(500).json({ error: err.message || 'Error shipping order via Shiprocket' });
   }
 });
 

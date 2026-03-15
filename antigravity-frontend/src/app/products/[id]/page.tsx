@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect, use } from 'react';
 import Link from 'next/link';
+import { API_BASE_URL, resolveImageUrl } from '@/lib/api';
 
 export default function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -17,7 +18,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
   const [hasPurchased, setHasPurchased] = useState(false);
 
   useEffect(() => {
-    fetch(`http://localhost:5000/api/products/${id}`)
+    fetch(`${API_BASE_URL}/api/products/${id}`)
       .then(res => res.json())
       .then(data => {
         setProduct(data);
@@ -47,7 +48,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
       });
 
     // Fetch reviews
-    fetch(`http://localhost:5000/api/reviews/${id}`)
+    fetch(`${API_BASE_URL}/api/reviews/${id}`)
       .then(res => res.json())
       .then(data => setReviews(Array.isArray(data) ? data : []))
       .catch(err => console.error("Error fetching reviews:", err));
@@ -57,7 +58,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
     const token = localStorage.getItem('ag_token');
     if (userStr && token) {
       const user = JSON.parse(userStr);
-      fetch(`http://localhost:5000/api/orders/my-orders`, {
+      fetch(`${API_BASE_URL}/api/orders/my-orders`, {
         headers: { 'Authorization': `Bearer ${token}` }
       })
       .then(res => res.json())
@@ -86,7 +87,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
 
     setIsSubmittingReview(true);
     try {
-      const res = await fetch('http://localhost:5000/api/reviews', {
+      const res = await fetch(`${API_BASE_URL}/api/reviews`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -102,7 +103,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
       if (res.ok) {
         setNewReview({ rating: 5, comment: '' });
         // Refresh reviews
-        const reviewsRes = await fetch(`http://localhost:5000/api/reviews/${id}`);
+        const reviewsRes = await fetch(`${API_BASE_URL}/api/reviews/${id}`);
         const reviewsData = await reviewsRes.json();
         setReviews(reviewsData);
         alert("Review submitted successfully!");
@@ -136,7 +137,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
           {selectedImage ? (
             <div className="w-full bg-white/5 rounded-xl border border-white/10 overflow-hidden relative group">
               <img 
-                src={selectedImage.startsWith('http') ? selectedImage : `http://localhost:5000${selectedImage.startsWith('/') ? '' : '/'}${selectedImage}`} 
+                src={resolveImageUrl(selectedImage)} 
                 alt={product.name} 
                 className="w-full h-auto object-cover" 
               />
@@ -178,7 +179,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                       title={`Select variant ${i+1}`}
                     >
                       <img 
-                        src={img.startsWith('http') ? img : `http://localhost:5000${img.startsWith('/') ? '' : '/'}${img}`} 
+                        src={resolveImageUrl(img)} 
                         alt={`${product.name} Variant ${i+1}`} 
                         className="w-full h-full object-cover" 
                       />

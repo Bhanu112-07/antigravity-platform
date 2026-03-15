@@ -1,4 +1,5 @@
 import React from 'react';
+import { resolveImageUrl } from '@/lib/api';
 import Link from 'next/link';
 import Image from 'next/image';
 
@@ -21,7 +22,7 @@ export default function ProductCard({ id, name, price, category, imageUrl, image
         <div className="absolute inset-0 bg-gradient-to-br from-purple-900/40 to-cyan-900/40 opacity-50 z-0"></div>
         {finalImageUrl ? (
           <img 
-            src={finalImageUrl.startsWith('http') ? finalImageUrl : `http://localhost:5000${finalImageUrl.startsWith('/') ? '' : '/'}${finalImageUrl}`} 
+            src={resolveImageUrl(finalImageUrl)} 
             alt={name} 
             className="w-full h-full object-cover z-10 relative group-hover:scale-110 transition-transform duration-700"
           />

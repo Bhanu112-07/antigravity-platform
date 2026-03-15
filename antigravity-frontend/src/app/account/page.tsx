@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect } from 'react';
+import { API_BASE_URL } from '@/lib/api';
 import Link from 'next/link';
 
 export default function AccountPage() {
@@ -18,7 +19,7 @@ export default function AccountPage() {
 
     try {
       setUser(JSON.parse(rawUser));
-      fetch('http://localhost:5000/api/orders/my-orders', {
+      fetch(`${API_BASE_URL}/api/orders/my-orders`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -86,6 +87,12 @@ export default function AccountPage() {
                   <p className="text-xs text-white/40 uppercase tracking-wider mb-1">Email</p>
                   <p className="font-semibold">{user?.email}</p>
                 </div>
+                {user?.phone && (
+                  <div>
+                    <p className="text-xs text-white/40 uppercase tracking-wider mb-1">Phone</p>
+                    <p className="font-semibold">{user?.phone}</p>
+                  </div>
+                )}
                 <div>
                   <p className="text-xs text-white/40 uppercase tracking-wider mb-1">Clearance Level</p>
                   <p className={`font-semibold uppercase text-xs inline-block px-2 py-1 rounded ${user?.role === 'admin' ? 'bg-purple-500/20 text-purple-300' : 'bg-cyan-500/20 text-cyan-300'}`}>

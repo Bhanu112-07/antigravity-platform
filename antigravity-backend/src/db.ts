@@ -2,8 +2,9 @@ import sqlite3 from 'sqlite3';
 import { open } from 'sqlite';
 
 export async function getDb() {
+  const dbPath = process.env.DATABASE_PATH || './database.sqlite';
   return open({
-    filename: './database.sqlite',
+    filename: dbPath,
     driver: sqlite3.Database
   });
 }
@@ -16,6 +17,7 @@ export async function initDb() {
       name TEXT,
       email TEXT UNIQUE,
       password TEXT,
+      phone TEXT,
       role TEXT DEFAULT 'user',
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );
@@ -37,7 +39,7 @@ export async function initDb() {
     );
 
     CREATE TABLE IF NOT EXISTS orders (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id TEXT PRIMARY KEY,
       user_id INTEGER,
       total_amount REAL,
       status TEXT DEFAULT 'pending',
@@ -49,6 +51,8 @@ export async function initDb() {
       city TEXT,
       pin_code TEXT,
       payment_method TEXT,
+      shiprocket_order_id TEXT,
+      shiprocket_shipment_id TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY(user_id) REFERENCES users(id)
     );
