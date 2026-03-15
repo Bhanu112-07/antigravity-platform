@@ -1,0 +1,38 @@
+import express from 'express';
+import cors from 'cors';
+import dotenv from 'dotenv';
+import { initDb } from './db';
+
+import authRoutes from './routes/auth';
+import productsRoutes from './routes/products';
+import ordersRoutes from './routes/orders';
+import adminRoutes from './routes/admin';
+import reviewsRoutes from './routes/reviews';
+
+dotenv.config();
+
+const app = express();
+const port = process.env.PORT || 5000;
+
+app.use(cors());
+app.use(express.json());
+
+app.use('/api/auth', authRoutes);
+app.use('/api/products', productsRoutes);
+app.use('/api/orders', ordersRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/reviews', reviewsRoutes);
+app.use('/uploads', express.static('uploads'));
+
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', message: 'Antigravity API running' });
+});
+
+// Initialize DB and start server
+initDb().then(() => {
+  app.listen(port, () => {
+    console.log(`Server running on port ${port}`);
+  });
+}).catch(err => {
+  console.error('Failed to initialize database', err);
+});
