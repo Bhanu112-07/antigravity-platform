@@ -1,6 +1,8 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import fs from 'fs';
+import path from 'path';
 import { initDb } from './db';
 
 import authRoutes from './routes/auth';
@@ -22,7 +24,11 @@ app.use('/api/products', productsRoutes);
 app.use('/api/orders', ordersRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/reviews', reviewsRoutes);
-app.use('/uploads', express.static('uploads'));
+const uploadsDir = path.join(process.cwd(), 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+app.use('/uploads', express.static(uploadsDir));
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: 'Antigravity API running' });

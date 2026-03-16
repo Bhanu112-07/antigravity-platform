@@ -134,7 +134,18 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
       <div className="grid grid-cols-1 md:grid-cols-12 gap-8 lg:gap-16 items-start">
         {/* Product Image Gallery */}
         <div className="md:col-span-7 flex flex-col gap-4">
-          {selectedImage ? (
+          {product.video_url ? (
+            <div className="w-full bg-white/5 rounded-xl border border-white/10 overflow-hidden relative group aspect-video">
+              <video 
+                src={resolveImageUrl(product.video_url)} 
+                controls 
+                autoPlay 
+                muted 
+                loop 
+                className="w-full h-full object-cover"
+              />
+            </div>
+          ) : selectedImage ? (
             <div className="w-full bg-white/5 rounded-xl border border-white/10 overflow-hidden relative group">
               <img 
                 src={resolveImageUrl(selectedImage)} 
@@ -146,6 +157,24 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
             <div className="w-full aspect-[4/5] bg-white/5 rounded-xl border border-white/10 flex flex-col items-center justify-center text-white/20">
               No Image
             </div>
+          )}
+          
+          {/* Thumbnails below if video exists */}
+          {product.video_url && allImages.length > 0 && (
+             <div className="flex gap-2 overflow-x-auto pb-2">
+                {allImages.map((img, i) => (
+                  <button 
+                    key={i} 
+                    onClick={() => {
+                      // Logic to switch to image view could go here, 
+                      // but for now let's just show them
+                    }}
+                    className="w-20 h-24 flex-shrink-0 rounded-lg overflow-hidden border border-white/10"
+                  >
+                    <img src={resolveImageUrl(img)} className="w-full h-full object-cover" />
+                  </button>
+                ))}
+             </div>
           )}
         </div>
 

@@ -96,7 +96,7 @@ export default function Home() {
               >
                 {product.video_url ? (
                   <video
-                    src={product.video_url}
+                    src={resolveImageUrl(product.video_url)}
                     autoPlay
                     muted
                     loop
