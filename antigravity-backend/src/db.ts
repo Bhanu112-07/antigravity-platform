@@ -1,5 +1,6 @@
 import { Pool } from 'pg';
 import dotenv from 'dotenv';
+import bcrypt from 'bcryptjs';
 
 dotenv.config();
 
@@ -96,10 +97,6 @@ export async function initDb() {
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
 
-    -- Insert default categories if they don't exist
-    INSERT INTO categories (name) VALUES ('Men'), ('Women'), ('Accessories')
-    ON CONFLICT (name) DO NOTHING;
-
     CREATE TABLE IF NOT EXISTS reviews (
       id SERIAL PRIMARY KEY,
       product_id INTEGER NOT NULL REFERENCES products(id),
@@ -110,5 +107,40 @@ export async function initDb() {
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
   `);
-  console.log('Database initialized.');
+
+  // Auto-seed categories
+  await dbWrapper.exec(`
+    INSERT INTO categories (name) VALUES ('Men'), ('Women'), ('Accessories')
+    ON CONFLICT (name) DO NOTHING;
+  `);
+
+  // Auto-seed Admin User if no users exist
+  const userCount = await dbWrapper.get('SELECT COUNT(*) as count FROM users');
+  if (parseInt(userCount.count) === 0) {
+    const hashedPassword = await bcrypt.hash('demo123', 10);
+    await dbWrapper.run(
+      'INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)',
+      ['Demo Admin', 'Demo@gmail.com', hashedPassword, 'admin']
+    );
+    console.log('Seeded Admin User: Demo@gmail.com / demo123');
+  }
+
+  // Auto-seed Products if no products exist
+  const productCount = await dbWrapper.get('SELECT COUNT(*) as count FROM products');
+  if (parseInt(productCount.count) === 0) {
+    const mockProducts = [
+      { name: 'Nebula Hoodie', description: 'Engineered for zero gravity.', price: 2999, category: 'Men', image_url: 'https://images.unsplash.com/photo-1556821840-3a63f95609a7?q=80&w=1587&auto=format&fit=crop', stock: 15, is_bestseller: 1 },
+      { name: 'Horizon Cargo', description: 'Premium cyber fit.', price: 3499, category: 'Men', image_url: 'https://images.unsplash.com/photo-1624378439575-d10c6d1774ac?q=80&w=1587&auto=format&fit=crop', stock: 20 },
+      { name: 'Lunar Crop Top', description: 'Night sky design.', price: 1299, category: 'Women', image_url: 'https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?q=80&w=1740&auto=format&fit=crop', stock: 12, is_bestseller: 1 }
+    ];
+    for (const p of mockProducts) {
+      await dbWrapper.run(
+        'INSERT INTO products (name, description, price, category, image_url, stock, is_bestseller) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        [p.name, p.description, p.price, p.category, p.image_url, p.stock, p.is_bestseller]
+      );
+    }
+    console.log('Seeded Initial Mock Products.');
+  }
+
+  console.log('Database initialization complete.');
 }
