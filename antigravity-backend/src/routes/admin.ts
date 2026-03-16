@@ -10,15 +10,15 @@ router.get('/stats', authenticateAdmin, async (req, res) => {
   try {
     const db = await getDb();
     
-    const usersCount = await db.get('SELECT COUNT(*) as count FROM users');
-    const productsCount = await db.get('SELECT COUNT(*) as count FROM products');
-    const ordersCount = await db.get('SELECT COUNT(*) as count FROM orders');
-    const totalRevenue = await db.get('SELECT SUM(total_amount) as revenue FROM orders WHERE status != "cancelled"');
+    const usersCount = await db.get('SELECT COUNT(*)::int as count FROM users');
+    const productsCount = await db.get('SELECT COUNT(*)::int as count FROM products');
+    const ordersCount = await db.get('SELECT COUNT(*)::int as count FROM orders');
+    const totalRevenue = await db.get("SELECT SUM(total_amount)::float as revenue FROM orders WHERE status != 'cancelled'");
 
     res.json({
-      users: usersCount.count,
-      products: productsCount.count,
-      orders: ordersCount.count,
+      users: usersCount.count || 0,
+      products: productsCount.count || 0,
+      orders: ordersCount.count || 0,
       revenue: totalRevenue.revenue || 0
     });
   } catch (err) {

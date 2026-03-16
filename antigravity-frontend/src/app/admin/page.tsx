@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { API_BASE_URL } from '@/lib/api';
+import { API_BASE_URL, resolveImageUrl } from '@/lib/api';
 
 // Icons
 const DashboardIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>;
@@ -556,7 +556,7 @@ export default function AdminDashboard() {
                             <div className="w-10 h-10 bg-white/10 rounded flex-shrink-0 overflow-hidden">
                               {product.image_url && (
                                 <img 
-                                  src={product.image_url.startsWith('http') ? product.image_url : `http://localhost:5000${product.image_url.startsWith('/') ? '' : '/'}${product.image_url}`} 
+                                  src={resolveImageUrl(product.image_url)} 
                                   alt={product.name} 
                                   className="w-full h-full object-cover" 
                                 />
@@ -732,7 +732,7 @@ export default function AdminDashboard() {
                                     <div className="w-12 h-16 bg-black/50 rounded overflow-hidden flex-shrink-0 border border-white/10">
                                       {item.image_url && (
                                         <img 
-                                          src={item.image_url.startsWith('http') ? item.image_url : `http://localhost:5000${item.image_url.startsWith('/') ? '' : '/'}${item.image_url}`} 
+                                          src={resolveImageUrl(item.image_url)} 
                                           alt={item.name} 
                                           className="w-full h-full object-cover" 
                                         />
