@@ -28,6 +28,7 @@
   "optionalDependencies": {
     "@next/swc-linux-x64-gnu": "15.1.6",
     "@next/swc-linux-x64-musl": "15.1.6",
+    "@tailwindcss/oxide-linux-x64-gnu": "4.0.0",
     "lightningcss-linux-x64-gnu": "1.28.1"
   }
 }
