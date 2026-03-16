@@ -79,7 +79,7 @@ router.post('/login', async (req, res) => {
     }
 
     const db = await getDb();
-    const user = await db.get('SELECT * FROM users WHERE email = ?', [email]);
+    const user = await db.get('SELECT * FROM users WHERE LOWER(email) = LOWER(?)', [email]);
 
     if (!user) {
       return res.status(401).json({ error: 'Invalid credentials' });

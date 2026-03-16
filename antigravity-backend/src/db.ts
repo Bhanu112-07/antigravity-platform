@@ -114,16 +114,15 @@ export async function initDb() {
     ON CONFLICT (name) DO NOTHING;
   `);
 
-  // Auto-seed Admin User if no users exist
-  const userCount = await dbWrapper.get('SELECT COUNT(*) as count FROM users');
-  if (parseInt(userCount.count) === 0) {
-    const hashedPassword = await bcrypt.hash('demo123', 10);
-    await dbWrapper.run(
-      'INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)',
-      ['Demo Admin', 'Demo@gmail.com', hashedPassword, 'admin']
-    );
-    console.log('Seeded Admin User: Demo@gmail.com / demo123');
-  }
+  // Auto-seed Admin User (Ensure password matches even if user already existed)
+  const hashedPassword = await bcrypt.hash('demo123', 10);
+  await dbWrapper.run(`
+    INSERT INTO users (name, email, password, role) 
+    VALUES (?, ?, ?, ?)
+    ON CONFLICT (email) 
+    DO UPDATE SET password = EXCLUDED.password, role = 'admin'
+  `, ['Demo Admin', 'demo@gmail.com', hashedPassword, 'admin']);
+  console.log('Seeded/Updated Admin User: demo@gmail.com / demo123');
 
   // Auto-seed Products if no products exist
   const productCount = await dbWrapper.get('SELECT COUNT(*) as count FROM products');
