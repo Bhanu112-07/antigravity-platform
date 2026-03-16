@@ -19,12 +19,12 @@
     "@types/express": "^5.0.6",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/multer": "^2.1.0",
-    "@types/node": "^25.5.0",
     "nodemon": "^3.1.14",
-    "ts-node": "^10.9.2",
-    "typescript": "^5.9.3"
+    "ts-node": "^10.9.2"
   },
   "dependencies": {
+    "@types/node": "^25.5.0",
+    "typescript": "^5.9.3",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",
     "dotenv": "^17.3.1",

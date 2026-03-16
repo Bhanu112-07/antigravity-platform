@@ -77,13 +77,13 @@ router.post('/', authenticateAdmin, productUpload, async (req, res) => {
     const files = req.files as { [fieldname: string]: Express.Multer.File[] };
     if (files && files['images']) {
       files['images'].forEach((f: any) => {
-        imageUrls.push(`http://localhost:5000/uploads/${f.filename}`);
+        imageUrls.push(`/uploads/${f.filename}`);
       });
     }
 
     let final_video_url = video_url || '';
     if (files && files['video'] && files['video'].length > 0) {
-      final_video_url = `http://localhost:5000/uploads/${files['video'][0].filename}`;
+      final_video_url = `/uploads/${files['video'][0].filename}`;
     }
 
     // Fallback logic for single initial image for backward compatibility
@@ -129,13 +129,13 @@ router.put('/:id', authenticateAdmin, productUpload, async (req, res) => {
     const files = req.files as { [fieldname: string]: Express.Multer.File[] };
     if (files && files['images']) {
       files['images'].forEach((f: any) => {
-        imageUrls.push(`http://localhost:5000/uploads/${f.filename}`);
+        imageUrls.push(`/uploads/${f.filename}`);
       });
     }
 
     let final_video_url = video_url || '';
     if (files && files['video'] && files['video'].length > 0) {
-      final_video_url = `http://localhost:5000/uploads/${files['video'][0].filename}`;
+      final_video_url = `/uploads/${files['video'][0].filename}`;
     }
 
     let primary_image_url = imageUrls.length > 0 ? imageUrls[0] : req.body.image_url;

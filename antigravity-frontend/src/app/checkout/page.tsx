@@ -379,7 +379,7 @@ export default function CheckoutPage() {
                     <div className="w-20 h-24 bg-gradient-to-br from-purple-900/40 to-cyan-900/40 rounded border border-white/10 flex-shrink-0 overflow-hidden">
                       {item.image_url ? (
                         <img 
-                          src={item.image_url.startsWith('http') ? item.image_url : `http://localhost:5000${item.image_url.startsWith('/') ? '' : '/'}${item.image_url}`} 
+                          src={item.image_url.startsWith('http') ? item.image_url : `${API_BASE_URL}${item.image_url.startsWith('/') ? '' : '/'}${item.image_url}`} 
                           alt={item.name} 
                           className="w-full h-full object-cover" 
                         />
