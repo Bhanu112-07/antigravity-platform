@@ -28,10 +28,10 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: 'Antigravity API running' });
 });
 
-// Initialize DB and start server
+console.log('Attempting to initialize database...');
 initDb().then(() => {
   app.listen(port, () => {
-    console.log(`Server running on port ${port}`);
+    console.log(`Server fully operational on port ${port}`);
   });
 }).catch(err => {
   console.error('Failed to initialize database', err);
