@@ -1,5 +1,4 @@
-import { open } from 'sqlite';
-import sqlite3 from 'sqlite3';
+import { initDb, getDb } from './src/db';
 
 const mockData = [
   { name: 'Nebula Hoodie', description: 'Engineered for zero gravity.', price: 2999, category: 'Men', image_url: 'https://images.unsplash.com/photo-1556821840-3a63f95609a7?q=80&w=1587&auto=format&fit=crop', stock: 15 },
@@ -11,10 +10,8 @@ const mockData = [
 ];
 
 async function seed() {
-  const db = await open({
-    filename: './database.sqlite',
-    driver: sqlite3.Database
-  });
+  await initDb();
+  const db = await getDb();
 
   const count = await db.get('SELECT COUNT(*) as count FROM products');
   if (count.count === 0) {
