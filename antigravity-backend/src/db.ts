@@ -102,6 +102,7 @@ export async function getDb() {
 }
 
 export async function initDb() {
+  console.log('Starting initDb...');
   const isPostgres = !!pool;
   
   // Use compatible types for both DBs
@@ -175,6 +176,7 @@ export async function initDb() {
       value TEXT
     );
   `);
+  console.log('Core tables created or verified.');
 
   // Auto-seed FAB section config if it doesn't exist
   const fabConfig = await dbWrapper.get("SELECT value FROM site_configs WHERE key = 'fab_section'");
@@ -189,6 +191,7 @@ export async function initDb() {
     });
     await dbWrapper.run("INSERT INTO site_configs (key, value) VALUES ('fab_section', ?)", [defaultFab]);
   }
+  console.log('Site configs checked.');
 
   // Auto-seed categories
   if (isPostgres) {
@@ -201,6 +204,7 @@ export async function initDb() {
       INSERT OR IGNORE INTO categories (name) VALUES ('T-Shirt'), ('PHANTS'), ('Accessories');
     `);
   }
+  console.log('Categories seeded.');
 
   // Auto-seed Admin User
   const hashedPassword = await bcrypt.hash('demo123', 10);
