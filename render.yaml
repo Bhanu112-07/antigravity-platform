@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: antigravity-api
+    env: node
+    rootDir: antigravity-backend
+    buildCommand: npm install && npm run build
+    startCommand: npm run start
+    envVars:
+      - key: NODE_VERSION
+        value: 20.0.0
+      - key: PORT
+        value: 10000
+
+  - type: web
+    name: antigravity-frontend
+    env: node
+    rootDir: antigravity-frontend
+    buildCommand: npm install && npm run build
+    startCommand: npm run start
+    envVars:
+      - key: NODE_VERSION
+        value: 20.0.0

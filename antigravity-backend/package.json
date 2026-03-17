@@ -15,6 +15,9 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "nodemon": "^3.1.14"
+  },
+  "dependencies": {
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/jsonwebtoken": "^9.0.10",
@@ -22,11 +25,8 @@
     "@types/node": "^20.11.0",
     "@types/pg": "^8.11.11",
     "@types/sqlite3": "^5.1.0",
-    "nodemon": "^3.1.14",
     "ts-node": "^10.9.2",
-    "typescript": "^5.9.3"
-  },
-  "dependencies": {
+    "typescript": "^5.9.3",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",
     "dotenv": "^17.3.1",
