@@ -11,27 +11,29 @@
   }
 }
 
-html, body {
+html {
   scroll-behavior: smooth;
 }
 
 body {
-  color: #fff;
-  background-color: #000;
+  color: #000;
+  background-color: #fff;
   overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* Custom Scrollbar for a premium feel */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #000; 
+  background: transparent; 
 }
 ::-webkit-scrollbar-thumb {
-  background: #333; 
-  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.1); 
+  border-radius: 20px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #555; 
+  background: rgba(0, 0, 0, 0.2); 
 }

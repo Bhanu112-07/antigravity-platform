@@ -23,10 +23,23 @@ export default function AdminDashboard() {
   // Product Form State
   const [showProductForm, setShowProductForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState<any>(null);
-  const [productForm, setProductForm] = useState({ name: '', description: '', price: '', category: 'Men', image_url: '', stock: '', colors: '', sizes: '', image_urls: [], video_url: '', is_bestseller: 0 });
+  const [productForm, setProductForm] = useState({ name: '', description: '', price: '', category: 'T-Shirt', image_url: '', stock: '', colors: '', sizes: '', image_urls: [], video_url: '', is_bestseller: 0 });
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
+  const [confirmModal, setConfirmModal] = useState<{show: boolean, title: string, message: string, onConfirm: () => void} | null>(null);
+
+  // FAB Form State
+  const [fabForm, setFabForm] = useState({ 
+    title: '', 
+    stat1_title: '', 
+    stat1_subtitle: '', 
+    stat2_title: '', 
+    stat2_subtitle: '', 
+    video_url: '' 
+  });
+  const [fabReelFile, setFabReelFile] = useState<File | null>(null);
+  const [savingFab, setSavingFab] = useState(false);
 
   const getAuthHeaders = () => {
     const token = localStorage.getItem('ag_token');
@@ -72,6 +85,12 @@ export default function AdminDashboard() {
         if (catRes.ok) {
           const catData = await catRes.json();
           setCategories(catData);
+        }
+      } else if (activeTab === 'fab') {
+        const fabRes = await fetch(`${API_BASE_URL}/api/site/fab`);
+        if (fabRes.ok) {
+          const fabData = await fabRes.json();
+          setFabForm(fabData);
         }
       }
     } catch (err) {
@@ -154,7 +173,7 @@ export default function AdminDashboard() {
       if (res.ok) {
         setShowProductForm(false);
         setEditingProduct(null);
-        setProductForm({ name: '', description: '', price: '', category: 'Men', image_url: '', stock: '', colors: '', sizes: '', image_urls: [], video_url: '', is_bestseller: 0 });
+        setProductForm({ name: '', description: '', price: '', category: 'T-Shirt', image_url: '', stock: '', colors: '', sizes: '', image_urls: [], video_url: '', is_bestseller: 0 });
         setImageFiles([]);
         setVideoFile(null);
         fetchDashboardData();
@@ -189,20 +208,28 @@ export default function AdminDashboard() {
   };
 
   const handleDeleteCategory = async (id: number) => {
-    if (!confirm('Are you sure? Products in this category will remain, but the category itself will be gone.')) return;
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/admin/categories/${id}`, {
-        method: 'DELETE',
-        headers: getAuthHeaders()
-      });
-      if (res.ok) {
-        fetchDashboardData();
-      } else {
-        alert('Failed to delete category');
+    setConfirmModal({
+      show: true,
+      title: 'Delete Category',
+      message: 'Are you sure? Products in this category will remain, but the category itself will be gone.',
+      onConfirm: async () => {
+        try {
+          const res = await fetch(`${API_BASE_URL}/api/admin/categories/${id}`, {
+            method: 'DELETE',
+            headers: getAuthHeaders()
+          });
+          if (res.ok) {
+            fetchDashboardData();
+            setConfirmModal(null);
+          } else {
+            const errorData = await res.json();
+            alert('Failed to delete category: ' + (errorData.error || 'Unknown error'));
+          }
+        } catch (err) {
+          alert('Error deleting category');
+        }
       }
-    } catch (err) {
-      alert('Error deleting category');
-    }
+    });
   };
 
   const openEditProduct = (product: any) => {
@@ -226,37 +253,92 @@ export default function AdminDashboard() {
   };
 
   const handleDeleteProduct = async (id: number) => {
-    if (!confirm('Are you sure you want to delete this product?')) return;
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/products/${id}`, {
-        method: 'DELETE',
-        headers: getAuthHeaders()
-      });
-      if (res.ok) {
-        fetchDashboardData();
-      } else {
-        alert('Failed to delete product');
+    setConfirmModal({
+      show: true,
+      title: 'Delete Product',
+      message: 'Are you sure you want to delete this product from inventory?',
+      onConfirm: async () => {
+        try {
+          const res = await fetch(`${API_BASE_URL}/api/products/${id}`, {
+            method: 'DELETE',
+            headers: getAuthHeaders()
+          });
+          if (res.ok) {
+            fetchDashboardData();
+            setConfirmModal(null);
+          } else {
+            const errorData = await res.json();
+            alert('Failed to delete product: ' + (errorData.error || 'Unknown error'));
+          }
+        } catch (e) {
+          alert('Error deleting product');
+        }
       }
-    } catch (e) {
-      alert('Error deleting product');
-    }
+    });
   };
 
   const handleDeleteOrder = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this order?')) return;
+    setConfirmModal({
+      show: true,
+      title: 'Erase Order Record',
+      message: 'Are you sure you want to permanently delete this order record? This action cannot be undone.',
+      onConfirm: async () => {
+        try {
+          const res = await fetch(`${API_BASE_URL}/api/admin/orders/${id}`, {
+            method: 'DELETE',
+            headers: getAuthHeaders()
+          });
+          if (res.ok) {
+            fetchDashboardData();
+            setSelectedOrder(null);
+            setConfirmModal(null);
+          } else {
+            const errorData = await res.json();
+            alert('Failed to delete order: ' + (errorData.error || 'Unknown error'));
+          }
+        } catch (err) {
+          alert('Error deleting order');
+        }
+      }
+    });
+  };
+
+  const handleFabUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
     try {
-      const res = await fetch(`${API_BASE_URL}/api/admin/orders/${id}`, {
-        method: 'DELETE',
-        headers: getAuthHeaders()
+      setSavingFab(true);
+      const formData = new FormData();
+      formData.append('title', fabForm.title);
+      formData.append('stat1_title', fabForm.stat1_title);
+      formData.append('stat1_subtitle', fabForm.stat1_subtitle);
+      formData.append('stat2_title', fabForm.stat2_title);
+      formData.append('stat2_subtitle', fabForm.stat2_subtitle);
+      formData.append('existing_video_url', fabForm.video_url);
+      
+      if (fabReelFile) {
+        formData.append('video', fabReelFile);
+      }
+
+      const res = await fetch(`${API_BASE_URL}/api/site/fab/sqlite`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('ag_token')}`
+        },
+        body: formData
       });
+
       if (res.ok) {
-        fetchDashboardData();
-        setSelectedOrder(null);
+        const data = await res.json();
+        setFabForm(prev => ({ ...prev, video_url: data.video_url }));
+        setFabReelFile(null);
+        alert('FAB Section updated successfully!');
       } else {
-        alert('Failed to delete order');
+        alert('Failed to update FAB section');
       }
     } catch (err) {
-      alert('Error deleting order');
+      alert('Error updating FAB section');
+    } finally {
+      setSavingFab(false);
     }
   };
 
@@ -281,119 +363,130 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-black flex flex-col md:flex-row">
+    <div className="min-h-screen bg-gray-50 flex flex-col md:flex-row">
       {/* Sidebar sidebar */}
-      <aside className="w-full md:w-64 bg-white/5 border-r border-white/10 p-6 flex flex-col min-h-full">
-        <h2 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-cyan-400 uppercase tracking-tighter mb-10">
-          Admin Panel
+      <aside className="w-full md:w-64 bg-white border-r border-black/5 p-8 flex flex-col min-h-full shadow-2xl z-20">
+        <h2 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-cyan-600 uppercase tracking-tighter mb-12">
+          Management
         </h2>
         
-        <nav className="flex-grow space-y-2">
+        <nav className="flex-grow space-y-3">
           <button 
             onClick={() => setActiveTab('dashboard')}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'dashboard' ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30' : 'text-white/60 hover:text-white hover:bg-white/5'}`}
+            className={`w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-all duration-300 ${activeTab === 'dashboard' ? 'bg-black text-white shadow-2xl scale-105' : 'text-black/40 hover:text-black hover:bg-black/5'}`}
           >
             <DashboardIcon />
-            <span className="font-bold text-sm">Dashboard</span>
+            <span className="font-black text-[10px] uppercase tracking-widest">Dashboard</span>
           </button>
           <button 
             onClick={() => setActiveTab('products')}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'products' ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30' : 'text-white/60 hover:text-white hover:bg-white/5'}`}
+            className={`w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-all duration-300 ${activeTab === 'products' ? 'bg-black text-white shadow-2xl scale-105' : 'text-black/40 hover:text-black hover:bg-black/5'}`}
           >
             <ProductsIcon />
-            <span className="font-bold text-sm">Products</span>
+            <span className="font-black text-[10px] uppercase tracking-widest">Inventory</span>
           </button>
           <button 
             onClick={() => setActiveTab('orders')}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'orders' ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30' : 'text-white/60 hover:text-white hover:bg-white/5'}`}
+            className={`w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-all duration-300 ${activeTab === 'orders' ? 'bg-black text-white shadow-2xl scale-105' : 'text-black/40 hover:text-black hover:bg-black/5'}`}
           >
             <OrdersIcon />
-            <span className="font-bold text-sm">Orders</span>
+            <span className="font-black text-[10px] uppercase tracking-widest">Orders</span>
           </button>
-          <button 
-            onClick={() => setActiveTab('categories')}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'categories' ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30' : 'text-white/60 hover:text-white hover:bg-white/5'}`}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m16 6 4 14H4L8 6Z"/><path d="M12 2v4"/><path d="m8 10 8 4"/><path d="m16 10-8 4"/></svg>
-            <span className="font-bold text-sm">Categories</span>
-          </button>
+          <button onClick={() => setActiveTab('categories')} className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all ${activeTab === 'categories' ? 'bg-black text-white shadow-xl' : 'text-black/40 hover:bg-black/5'}`}>
+                <div className={`${activeTab === 'categories' ? 'text-white' : 'text-black opacity-20'}`}><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>
+                Category
+              </button>
+              <button onClick={() => setActiveTab('fab')} className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all ${activeTab === 'fab' ? 'bg-[#2EABEB] text-white shadow-xl' : 'text-black/40 hover:bg-black/5'}`}>
+                <div className={`${activeTab === 'fab' ? 'text-white' : 'text-black opacity-20'}`}><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M10 8l6 4-6 4V8z"/></svg></div>
+                FAB Reel
+              </button>
         </nav>
         
         <div className="mt-auto pt-10">
-          <button onClick={handleLogout} className="w-full py-3 border border-red-500/30 text-red-400 hover:bg-red-500/10 rounded-lg text-sm font-bold transition-colors">
-            Logout
+          <button onClick={handleLogout} className="w-full py-4 border-2 border-red-500/10 text-red-600 hover:bg-red-500 hover:text-white rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all">
+            Deactivate Session
           </button>
         </div>
       </aside>
 
       {/* Main Content */}
-      <main className="flex-grow p-8 overflow-y-auto h-screen">
-        {error && <div className="bg-red-500/10 border border-red-500/50 text-red-500 p-4 rounded mb-6">{error}</div>}
+      <main className="flex-grow p-12 overflow-y-auto h-screen bg-gray-50">
+        {error && <div className="bg-red-50 border border-red-100 text-red-600 p-6 rounded-[2rem] font-black uppercase text-[10px] tracking-widest mb-10 shadow-xl">{error}</div>}
         
         {loading ? (
           <div className="flex items-center justify-center h-full">
-            <span className="w-10 h-10 border-4 border-white/20 border-t-purple-500 rounded-full animate-spin"></span>
+            <span className="w-12 h-12 border-4 border-black/5 border-t-black rounded-full animate-spin"></span>
           </div>
         ) : (
           <>
             {activeTab === 'dashboard' && (
-              <div className="animate-in fade-in duration-500">
-                <h1 className="text-3xl font-bold mb-8">Overview</h1>
+              <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
+                <h1 className="text-4xl font-black text-black uppercase tracking-tighter mb-12">Operational Matrix</h1>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-                  <div className="bg-white/5 border border-white/10 p-6 rounded-xl border-l-4 border-l-purple-500 shadow-lg">
-                    <p className="text-white/50 text-sm font-semibold mb-2 uppercase tracking-wider">Total Revenue</p>
-                    <h3 className="text-3xl font-black text-white">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-16">
+                  <div className="bg-white border border-black/[0.03] p-8 rounded-[2.5rem] shadow-xl hover:shadow-2xl transition-all group">
+                    <p className="text-black/30 text-[10px] font-black mb-4 uppercase tracking-[0.2em] group-hover:text-purple-600 transition-colors">Gross Revenue</p>
+                    <h3 className="text-4xl font-black text-black tracking-tighter">
                       ₹{stats.revenue?.toLocaleString() || 0}
                     </h3>
                   </div>
-                  <div className="bg-white/5 border border-white/10 p-6 rounded-xl border-l-4 border-l-cyan-500 shadow-lg">
-                    <p className="text-white/50 text-sm font-semibold mb-2 uppercase tracking-wider">Total Orders</p>
-                    <h3 className="text-3xl font-black text-white">{stats.orders}</h3>
+                  <div className="bg-white border border-black/[0.03] p-8 rounded-[2.5rem] shadow-xl hover:shadow-2xl transition-all group">
+                    <p className="text-black/30 text-[10px] font-black mb-4 uppercase tracking-[0.2em] group-hover:text-cyan-600 transition-colors">Total Orders</p>
+                    <h3 className="text-4xl font-black text-black tracking-tighter">{stats.orders}</h3>
                   </div>
-                  <div className="bg-white/5 border border-white/10 p-6 rounded-xl border-l-4 border-l-green-500 shadow-lg">
-                    <p className="text-white/50 text-sm font-semibold mb-2 uppercase tracking-wider">Customers</p>
-                    <h3 className="text-3xl font-black text-white">{stats.users}</h3>
+                  <div className="bg-white border border-black/[0.03] p-8 rounded-[2.5rem] shadow-xl hover:shadow-2xl transition-all group">
+                    <p className="text-black/30 text-[10px] font-black mb-4 uppercase tracking-[0.2em] group-hover:text-emerald-600 transition-colors">Identities</p>
+                    <h3 className="text-4xl font-black text-black tracking-tighter">{stats.users}</h3>
                   </div>
-                  <div className="bg-white/5 border border-white/10 p-6 rounded-xl border-l-4 border-l-blue-500 shadow-lg">
-                    <p className="text-white/50 text-sm font-semibold mb-2 uppercase tracking-wider">Products</p>
-                    <h3 className="text-3xl font-black text-white">{stats.products}</h3>
+                  <div className="bg-white border border-black/[0.03] p-8 rounded-[2.5rem] shadow-xl hover:shadow-2xl transition-all group">
+                    <p className="text-black/30 text-[10px] font-black mb-4 uppercase tracking-[0.2em] group-hover:text-blue-600 transition-colors">Matter Catalog</p>
+                    <h3 className="text-4xl font-black text-black tracking-tighter">{stats.products}</h3>
                   </div>
                 </div>
 
                 <div>
-                  <h2 className="text-xl font-bold mb-6 border-b border-white/10 pb-4">Recent Orders</h2>
-                  <div className="overflow-x-auto bg-white/5 border border-white/10 rounded-xl">
-                    <table className="w-full text-left text-sm">
-                      <thead className="text-white/50 border-b border-white/10">
+                  <h2 className="text-xs font-black mb-8 uppercase tracking-[0.4em] text-black/30 flex items-center gap-4">
+                    Recent Orders
+                    <span className="h-px bg-black/5 flex-grow"></span>
+                  </h2>
+                  <div className="overflow-hidden bg-white border border-black/[0.03] rounded-[2.5rem] shadow-2xl">
+                    <table className="w-full text-left text-sm border-collapse">
+                      <thead className="bg-gray-50 text-black/30 border-b border-black/[0.03]">
                         <tr>
-                          <th className="p-4 font-semibold">Order ID</th>
-                          <th className="p-4 font-semibold">Customer Email</th>
-                          <th className="p-4 font-semibold">Date</th>
-                          <th className="p-4 font-semibold">Amount</th>
-                          <th className="p-4 font-semibold">Status</th>
+                          <th className="p-6 font-black uppercase text-[10px] tracking-widest">Hash</th>
+                          <th className="p-6 font-black uppercase text-[10px] tracking-widest">Subject</th>
+                          <th className="p-6 font-black uppercase text-[10px] tracking-widest">Timeline</th>
+                          <th className="p-6 font-black uppercase text-[10px] tracking-widest">Value</th>
+                          <th className="p-6 font-black uppercase text-[10px] tracking-widest">Status</th>
+                          <th className="p-6 font-black uppercase text-[10px] tracking-widest text-right">Actions</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-white/10">
+                      <tbody className="divide-y divide-black/[0.03]">
                         {orders.slice(0, 5).map((order) => (
-                          <tr key={order.id} className="hover:bg-white/5 transition-colors">
-                            <td className="p-4 font-mono text-xs">#{order.id}</td>
-                            <td className="p-4 font-semibold">{order.user_email}</td>
-                            <td className="p-4 text-white/60">{new Date(order.created_at).toLocaleDateString()}</td>
-                            <td className="p-4 font-bold">₹{order.total_amount}</td>
-                            <td className="p-4">
-                              <span className={`px-2 py-1 border rounded text-xs font-bold uppercase ${
-                                order.status === 'completed' ? 'bg-green-500/20 text-green-400 border-green-500/30' :
-                                order.status === 'pending' ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' :
-                                'bg-white/10 text-white/70 border-white/20'
+                          <tr key={order.id} className="hover:bg-gray-50 transition-colors group">
+                            <td className="p-6 font-mono text-[10px] text-black/40">#{order.id}</td>
+                            <td className="p-6 font-black uppercase text-xs">{order.user_email}</td>
+                            <td className="p-6 text-black/40 text-[10px] font-black uppercase tracking-widest">{new Date(order.created_at).toLocaleDateString()}</td>
+                            <td className="p-6 font-black text-black">₹{order.total_amount}</td>
+                            <td className="p-6">
+                              <span className={`px-4 py-2 rounded-full text-[9px] font-black uppercase tracking-widest shadow-sm ${
+                                order.status === 'completed' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' :
+                                order.status === 'pending' ? 'bg-yellow-50 text-yellow-600 border border-yellow-100' :
+                                'bg-gray-100 text-black/40'
                               }`}>
                                 {order.status}
                               </span>
                             </td>
+                            <td className="p-6 text-right">
+                              <div className="flex justify-end gap-2">
+                                <button onClick={() => setSelectedOrder(order)} className="px-3 py-1.5 hover:bg-black hover:text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition-all border border-black/5">View</button>
+                                <button onClick={() => handleDeleteOrder(order.id)} className="px-3 py-1.5 hover:bg-red-500 hover:text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition-all border border-black/5 text-red-600">Delete</button>
+                              </div>
+                            </td>
                           </tr>
                         ))}
                         {orders.length === 0 && (
-                          <tr><td colSpan={5} className="p-8 text-center text-white/40">No orders found.</td></tr>
+                          <tr><td colSpan={6} className="p-16 text-center text-black/20 font-black uppercase tracking-widest text-xs">No active orders found.</td></tr>
                         )}
                       </tbody>
                     </table>
@@ -401,221 +494,199 @@ export default function AdminDashboard() {
                 </div>
               </div>
             )}
-
             {activeTab === 'products' && (
-              <div className="animate-in fade-in duration-500">
-                <div className="flex justify-between items-center mb-8">
-                  <h1 className="text-3xl font-bold">Manage Products</h1>
+              <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
+                <div className="flex justify-between items-center mb-12">
+                  <h1 className="text-4xl font-black text-black uppercase tracking-tighter">Inventory Control</h1>
                   <button 
                     onClick={() => {
                       setEditingProduct(null);
-                      setProductForm({ name: '', description: '', price: '', category: 'Men', image_url: '', stock: '', colors: '', sizes: '', image_urls: [], video_url: '', is_bestseller: 0 });
+                      setProductForm({ name: '', description: '', price: '', category: 'T-Shirt', image_url: '', stock: '', colors: '', sizes: '', image_urls: [], video_url: '', is_bestseller: 0 });
                       setImageFiles([]);
                       setVideoFile(null);
                       setShowProductForm(!showProductForm);
                     }}
-                    className="bg-purple-600 hover:bg-purple-500 text-white px-4 py-2 flex items-center gap-2 rounded text-sm font-bold shadow-lg transition-colors"
+                    className="bg-black hover:bg-neutral-800 text-white px-8 py-4 flex items-center gap-3 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-2xl transition-all"
                   >
-                    {showProductForm ? 'Cancel' : '+ Add Product'}
+                    {showProductForm ? 'Close Terminal' : 'Deploy New Matter'}
                   </button>
                 </div>
 
                 {showProductForm && (
-                  <div className="bg-white/5 border border-purple-500/30 p-6 rounded-xl mb-8 animate-in slide-in-from-top-4 duration-300">
-                    <h2 className="text-xl font-bold mb-4">{editingProduct ? 'Edit Product' : 'Add New Product'}</h2>
-                    <form onSubmit={handleProductSubmit} className="space-y-4">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-sm text-white/60 mb-1">Product Name</label>
-                          <input type="text" required value={productForm.name} onChange={e => setProductForm({...productForm, name: e.target.value})} className="w-full bg-black border border-white/20 rounded p-2 focus:border-purple-500 outline-none" />
-                        </div>
-                        <div>
-                          <label className="block text-sm text-white/60 mb-1">Price (₹)</label>
-                          <input type="number" step="0.01" required value={productForm.price} onChange={e => setProductForm({...productForm, price: e.target.value})} className="w-full bg-black border border-white/20 rounded p-2 focus:border-purple-500 outline-none" />
-                        </div>
-                        <div>
-                          <label className="block text-sm text-white/60 mb-1">Category</label>
-                          <select value={productForm.category} onChange={e => setProductForm({...productForm, category: e.target.value})} className="w-full bg-black border border-white/20 rounded p-2 focus:border-purple-500 outline-none text-white appearance-none">
-                            {categories.map(cat => (
-                              <option key={cat.id} value={cat.name}>{cat.name}</option>
-                            ))}
-                            {categories.length === 0 && (
-                              <>
-                                <option value="Men">Men</option>
-                                <option value="Women">Women</option>
-                                <option value="Accessories">Accessories</option>
-                              </>
-                            )}
-                          </select>
-                        </div>
-                        <div>
-                          <label className="block text-sm text-white/60 mb-1">Stock</label>
-                          <input type="number" required value={productForm.stock} onChange={e => setProductForm({...productForm, stock: e.target.value})} className="w-full bg-black border border-white/20 rounded p-2 focus:border-purple-500 outline-none" />
-                        </div>
-                        <div>
-                          <label className="block text-sm text-white/60 mb-1">Colors (Comma separated)</label>
-                          <input type="text" value={productForm.colors} onChange={e => setProductForm({...productForm, colors: e.target.value})} className="w-full bg-black border border-white/20 rounded p-2 focus:border-purple-500 outline-none placeholder:text-white/20" placeholder="Black, White, Neon" />
-                        </div>
-                        <div>
-                          <label className="block text-sm text-white/60 mb-1">Sizes (Comma separated)</label>
-                          <input type="text" value={productForm.sizes} onChange={e => setProductForm({...productForm, sizes: e.target.value})} className="w-full bg-black border border-white/20 rounded p-2 focus:border-purple-500 outline-none placeholder:text-white/20" placeholder="S, M, L, XL" />
-                        </div>
-                        <div>
-                          <label className="block text-sm text-white/60 mb-1">Bestseller Video (MP4)</label>
-                          <input 
-                            type="file" 
-                            accept="video/mp4,video/x-m4v,video/*" 
-                            onChange={e => {
-                              if (e.target.files) setVideoFile(e.target.files[0]);
-                            }} 
-                            className="w-full bg-black border border-white/20 rounded p-2 focus:border-purple-500 outline-none text-sm text-white/80 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-white/10 file:text-white hover:file:bg-white/20 transition-all cursor-pointer" 
-                          />
-                          {(videoFile || productForm.video_url) && (
-                            <div className="mt-2 flex items-center gap-2 text-[10px] text-cyan-400 font-mono">
-                              <span className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-pulse"></span>
-                              {videoFile ? `New Video ready: ${videoFile.name}` : 'Current video preserved'}
-                            </div>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-2 pt-6">
-                          <input 
-                            type="checkbox" 
-                            id="is_bestseller"
-                            checked={productForm.is_bestseller === 1} 
-                            onChange={e => setProductForm({...productForm, is_bestseller: e.target.checked ? 1 : 0})} 
-                            className="w-5 h-5 accent-purple-500"
-                          />
-                          <label htmlFor="is_bestseller" className="text-sm font-bold uppercase tracking-wider cursor-pointer">Mark as Bestseller</label>
-                        </div>
-                        <div className="md:col-span-2">
-                          <label className="block text-sm text-white/60 mb-1">Product Images (Select up to 5)</label>
-                          <input type="file" multiple accept="image/*" onChange={e => {
-                            if (e.target.files) setImageFiles(Array.from(e.target.files));
-                          }} className="w-full bg-black border border-white/20 rounded p-2 focus:border-purple-500 outline-none text-sm text-white/80 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-white/10 file:text-white hover:file:bg-white/20 transition-all cursor-pointer" />
-                          
-                          {editingProduct && productForm.image_urls && productForm.image_urls.length > 0 && imageFiles.length === 0 && (
-                            <div className="mt-2 flex gap-3 flex-wrap">
-                              {productForm.image_urls.map((url: string, i: number) => (
-                                <div key={i} className="relative group">
-                                  <img src={url} alt={`Current image ${i+1}`} className="h-16 w-16 object-cover rounded border border-white/20" />
-                                  <button 
-                                    type="button"
-                                    onClick={() => {
-                                      const newUrls = [...productForm.image_urls];
-                                      newUrls.splice(i, 1);
-                                      setProductForm({ ...productForm, image_urls: newUrls });
-                                    }}
-                                    className="absolute -top-2 -right-2 bg-red-500 hover:bg-red-400 text-white w-5 h-5 rounded-full flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity shadow-[0_0_10px_rgba(239,68,68,0.5)]"
-                                  >
-                                    ×
-                                  </button>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                          {!productForm.image_urls?.length && productForm.image_url && imageFiles.length === 0 && (
-                            <div className="relative group w-max mt-2">
-                              <img src={productForm.image_url} alt="Current fallback image" className="h-16 w-16 object-cover rounded border border-white/20" />
-                              <button 
-                                type="button"
-                                onClick={() => setProductForm({ ...productForm, image_url: '' })}
-                                className="absolute -top-2 -right-2 bg-red-500 hover:bg-red-400 text-white w-5 h-5 rounded-full flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity shadow-[0_0_10px_rgba(239,68,68,0.5)]"
-                              >
-                                ×
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                        <div className="md:col-span-2">
-                          <label className="block text-sm text-white/60 mb-1">Description</label>
-                          <textarea rows={3} value={productForm.description} onChange={e => setProductForm({...productForm, description: e.target.value})} className="w-full bg-black border border-white/20 rounded p-2 focus:border-purple-500 outline-none"></textarea>
-                        </div>
-                      </div>
-                      <button type="submit" className="bg-white text-black font-bold px-6 py-2 rounded hover:bg-gray-200 transition-colors uppercase text-sm tracking-wider">
-                        {editingProduct ? 'Update Product' : 'Save Product'}
+                  <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-300">
+                    <div className="bg-white border border-black/[0.03] p-10 rounded-[2.5rem] w-full max-w-4xl shadow-2xl animate-in zoom-in-95 duration-300 max-h-[90vh] overflow-y-auto no-scrollbar relative">
+                      <button 
+                        onClick={() => {
+                          setShowProductForm(false);
+                          setEditingProduct(null);
+                        }}
+                        className="absolute top-8 right-8 text-black/20 hover:text-black transition-colors"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18M6 6l12 12" /></svg>
                       </button>
-                    </form>
+
+                      <h2 className="text-2xl font-black text-black uppercase tracking-tight mb-8">Data Entry Terminal: {editingProduct ? 'Modification' : 'Initialization'}</h2>
+                      <form onSubmit={handleProductSubmit} className="space-y-8">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                          <div>
+                            <label className="block text-[10px] font-black text-black/30 mb-3 uppercase tracking-widest">Descriptor Name</label>
+                            <input type="text" required value={productForm.name} onChange={e => setProductForm({...productForm, name: e.target.value})} className="w-full bg-gray-50 border border-black/[0.05] rounded-2xl p-4 focus:bg-white focus:border-black outline-none transition-all font-medium" />
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-black text-black/30 mb-3 uppercase tracking-widest">Market Value (₹)</label>
+                            <input type="number" step="0.01" required value={productForm.price} onChange={e => setProductForm({...productForm, price: e.target.value})} className="w-full bg-gray-50 border border-black/[0.05] rounded-2xl p-4 focus:bg-white focus:border-black outline-none transition-all font-medium" />
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-black text-black/30 mb-3 uppercase tracking-widest">Division Architecture</label>
+                            <select value={productForm.category} onChange={e => setProductForm({...productForm, category: e.target.value})} className="w-full bg-gray-50 border border-black/[0.05] rounded-2xl p-4 focus:bg-white focus:border-black outline-none transition-all font-bold appearance-none">
+                              {categories.map(cat => (
+                                <option key={cat.id} value={cat.name}>{cat.name}</option>
+                              ))}
+                              {categories.length === 0 && (
+                                <>
+                                  <option value="T-Shirt">T-Shirt</option>
+                                  <option value="PHANTS">PHANTS</option>
+                                  <option value="Accessories">Accessories</option>
+                                </>
+                              )}
+                            </select>
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-black text-black/30 mb-3 uppercase tracking-widest">Stock Reserves</label>
+                            <input type="number" required value={productForm.stock} onChange={e => setProductForm({...productForm, stock: e.target.value})} className="w-full bg-gray-50 border border-black/[0.05] rounded-2xl p-4 focus:bg-white focus:border-black outline-none transition-all font-medium" />
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-black text-black/30 mb-3 uppercase tracking-widest">Chroma Spectrum</label>
+                            <input type="text" value={productForm.colors} onChange={e => setProductForm({...productForm, colors: e.target.value})} className="w-full bg-gray-50 border border-black/[0.05] rounded-2xl p-4 focus:bg-white focus:border-black outline-none transition-all font-medium" placeholder="Black, White, Neon" />
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-black text-black/30 mb-3 uppercase tracking-widest">Geometric Scale</label>
+                            <input type="text" value={productForm.sizes} onChange={e => setProductForm({...productForm, sizes: e.target.value})} className="w-full bg-gray-50 border border-black/[0.05] rounded-2xl p-4 focus:bg-white focus:border-black outline-none transition-all font-medium" placeholder="S, M, L, XL" />
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-black text-black/30 mb-3 uppercase tracking-widest">Cinematic Feed (MP4)</label>
+                            <input 
+                              type="file" 
+                              accept="video/mp4,video/x-m4v,video/*" 
+                              onChange={e => {
+                                if (e.target.files) setVideoFile(e.target.files[0]);
+                              }} 
+                              className="w-full bg-gray-50 border border-black/[0.05] rounded-2xl p-4 focus:bg-white focus:border-black outline-none text-[10px] font-black uppercase tracking-widest file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:bg-black file:text-white hover:file:bg-neutral-800 transition-all cursor-pointer" 
+                            />
+                          </div>
+                          <div className="flex items-center gap-4 pt-4">
+                            <input 
+                              type="checkbox" 
+                              id="is_bestseller"
+                              checked={productForm.is_bestseller === 1} 
+                              onChange={e => setProductForm({...productForm, is_bestseller: e.target.checked ? 1 : 0})} 
+                              className="w-6 h-6 accent-black rounded-lg cursor-pointer"
+                            />
+                            <label htmlFor="is_bestseller" className="text-[10px] font-black uppercase tracking-widest cursor-pointer text-black/60 hover:text-black transition-colors">Prioritize in Featured Stream</label>
+                          </div>
+                          <div className="md:col-span-2">
+                            <label className="block text-[10px] font-black text-black/30 mb-3 uppercase tracking-widest">Visual Data Arrays (Limit 5)</label>
+                            <input type="file" multiple accept="image/*" onChange={e => {
+                              if (e.target.files) setImageFiles(Array.from(e.target.files));
+                            }} className="w-full bg-gray-50 border border-black/[0.05] rounded-2xl p-4 focus:bg-white focus:border-black outline-none text-[10px] font-black uppercase tracking-widest file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:bg-black file:text-white hover:file:bg-neutral-800 transition-all cursor-pointer" />
+                          </div>
+                          <div className="md:col-span-2">
+                            <label className="block text-[10px] font-black text-black/30 mb-3 uppercase tracking-widest">Technical Description</label>
+                            <textarea rows={4} value={productForm.description} onChange={e => setProductForm({...productForm, description: e.target.value})} className="w-full bg-gray-50 border border-black/[0.05] rounded-2xl p-6 focus:bg-white focus:border-black outline-none transition-all font-medium leading-relaxed"></textarea>
+                          </div>
+                        </div>
+                        <button type="submit" className="w-full bg-black text-white font-black px-10 py-6 rounded-2xl hover:bg-neutral-800 transition-all uppercase text-[10px] tracking-[0.3em] shadow-2xl">
+                          {editingProduct ? 'Commit Changes' : 'Execute Creation'}
+                        </button>
+                      </form>
+                    </div>
                   </div>
                 )}
 
-                <div className="overflow-x-auto bg-white/5 border border-white/10 rounded-xl">
-                  <table className="w-full text-left text-sm">
-                    <thead className="text-white/50 border-b border-white/10 bg-black/50">
+                <div className="overflow-hidden bg-white border border-black/[0.03] rounded-[2.5rem] shadow-2xl">
+                  <table className="w-full text-left text-sm border-collapse">
+                    <thead className="bg-gray-50 text-black/30 border-b border-black/[0.03]">
                       <tr>
-                        <th className="p-4 font-semibold">Product</th>
-                        <th className="p-4 font-semibold">Category</th>
-                        <th className="p-4 font-semibold">Price</th>
-                        <th className="p-4 font-semibold">Stock</th>
-                        <th className="p-4 font-semibold text-right">Actions</th>
+                        <th className="p-6 font-black uppercase text-[10px] tracking-widest">Matter Entity</th>
+                        <th className="p-6 font-black uppercase text-[10px] tracking-widest">Division</th>
+                        <th className="p-6 font-black uppercase text-[10px] tracking-widest">Value</th>
+                        <th className="p-6 font-black uppercase text-[10px] tracking-widest">Reserves</th>
+                        <th className="p-6 font-black uppercase text-[10px] tracking-widest text-right">Operations</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-white/10">
+                    <tbody className="divide-y divide-black/[0.03]">
                       {products.map((product) => (
-                        <tr key={product.id} className="hover:bg-white/5 transition-colors">
-                          <td className="p-4 flex items-center gap-3">
-                            <div className="w-10 h-10 bg-white/10 rounded flex-shrink-0 overflow-hidden">
+                        <tr key={product.id} className="hover:bg-gray-50 transition-colors group">
+                          <td className="p-6 flex items-center gap-4">
+                            <div className="w-12 h-16 bg-gray-100 rounded-xl flex-shrink-0 overflow-hidden shadow-md border border-black/5">
                               {product.image_url && (
                                 <img 
                                   src={resolveImageUrl(product.image_url)} 
                                   alt={product.name} 
-                                  className="w-full h-full object-cover" 
+                                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
                                 />
                               )}
                             </div>
-                            <span className="font-semibold">{product.name}</span>
+                            <span className="font-black uppercase text-xs tracking-tight">{product.name}</span>
                           </td>
-                          <td className="p-4 text-white/70">{product.category}</td>
-                          <td className="p-4 font-bold">₹{product.price}</td>
-                          <td className="p-4">{product.stock}</td>
-                          <td className="p-4 text-right flex justify-end gap-2">
-                            <button onClick={() => openEditProduct(product)} className="px-3 py-1 bg-white/10 hover:bg-white/20 rounded text-xs font-bold transition-colors">Edit</button>
-                            <button onClick={() => handleDeleteProduct(product.id)} className="px-3 py-1 bg-red-500/20 text-red-400 hover:bg-red-500/40 rounded text-xs font-bold transition-colors">Delete</button>
+                          <td className="p-6 text-black/40 text-[10px] font-black uppercase tracking-widest">{product.category}</td>
+                          <td className="p-6 font-black text-black">₹{product.price}</td>
+                          <td className="p-6 text-black/40 font-bold">{product.stock}</td>
+                          <td className="p-6 text-right">
+                            <div className="flex justify-end gap-3">
+                              <button onClick={() => openEditProduct(product)} className="px-5 py-2 hover:bg-black hover:text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition-all border border-black/5">Modify</button>
+                              <button onClick={() => handleDeleteProduct(product.id)} className="px-5 py-2 hover:bg-red-500 hover:text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition-all border border-black/5 text-red-600">Erase</button>
+                            </div>
                           </td>
                         </tr>
                       ))}
-                      {products.length === 0 && (
-                        <tr><td colSpan={5} className="p-8 text-center text-white/40">No products found.</td></tr>
-                      )}
                     </tbody>
                   </table>
                 </div>
               </div>
             )}
-
             {activeTab === 'orders' && (
-              <div className="animate-in fade-in duration-500">
-                <h1 className="text-3xl font-bold mb-8">Manage Orders</h1>
-                
-                <div className="overflow-x-auto bg-white/5 border border-white/10 rounded-xl">
-                  <table className="w-full text-left text-sm">
-                    <thead className="text-white/50 border-b border-white/10 bg-black/50">
+              <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
+                <h1 className="text-4xl font-black text-black uppercase tracking-tighter mb-12">Order Management</h1>
+                <div className="overflow-hidden bg-white border border-black/[0.03] rounded-[2.5rem] shadow-2xl">
+                  <table className="w-full text-left text-sm border-collapse">
+                    <thead className="bg-gray-50 text-black/30 border-b border-black/[0.03]">
                       <tr>
-                        <th className="p-4 font-semibold uppercase tracking-wider">Order ID</th>
-                        <th className="p-4 font-semibold uppercase tracking-wider">Customer</th>
-                        <th className="p-4 font-semibold uppercase tracking-wider">Date</th>
-                        <th className="p-4 font-semibold uppercase tracking-wider">Amount</th>
-                        <th className="p-4 font-semibold uppercase tracking-wider">Status</th>
-                        <th className="p-4 font-semibold uppercase tracking-wider text-right">Actions</th>
+                        <th className="p-6 font-black uppercase text-[10px] tracking-widest">Hash</th>
+                        <th className="p-6 font-black uppercase text-[10px] tracking-widest">Subject</th>
+                        <th className="p-6 font-black uppercase text-[10px] tracking-widest">Matter Profile</th>
+                        <th className="p-6 font-black uppercase text-[10px] tracking-widest">Total Value</th>
+                        <th className="p-6 font-black uppercase text-[10px] tracking-widest">Status Control</th>
+                        <th className="p-6 font-black uppercase text-[10px] tracking-widest text-right">Actions</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-white/10">
+                    <tbody className="divide-y divide-black/[0.03]">
                       {orders.map((order) => (
-                        <tr key={order.id} className="hover:bg-white/5 transition-colors">
-                          <td className="p-4 font-mono text-xs">#{order.id}</td>
-                          <td className="p-4 font-semibold">
-                            {order.user_name} <br/>
-                            <span className="text-xs font-normal text-white/50">{order.user_email}</span>
+                        <tr key={order.id} className="hover:bg-gray-50 transition-colors group">
+                          <td className="p-6 font-mono text-[10px] text-black/40">#{order.id}</td>
+                          <td className="p-6">
+                            <div className="font-black uppercase text-xs mb-1">{order.user_email}</div>
+                            <div className="text-[10px] text-black/30 font-black uppercase tracking-widest">{new Date(order.created_at).toLocaleString()}</div>
                           </td>
-                          <td className="p-4 text-white/60">{new Date(order.created_at).toLocaleString()}</td>
-                          <td className="p-4 font-bold">₹{order.total_amount}</td>
-                          <td className="p-4">
+                          <td className="p-6">
+                            <div className="max-w-xs overflow-hidden text-ellipsis whitespace-nowrap text-[10px] font-black uppercase tracking-widest text-black/40">
+                              {(() => {
+                                try {
+                                  const items = JSON.parse(order.items);
+                                  return items.map((item: any) => `${item.name} (x${item.quantity})`).join(', ');
+                                } catch (e) { return order.items; }
+                              })()}
+                            </div>
+                          </td>
+                          <td className="p-6 font-black text-black">₹{order.total_amount}</td>
+                          <td className="p-6">
                             <select 
-                              value={order.status}
+                              value={order.status} 
                               onChange={(e) => handleOrderStatusUpdate(order.id, e.target.value)}
-                              className={`bg-black border rounded p-2 text-xs font-bold uppercase outline-none focus:border-white transition-colors cursor-pointer ${
-                                order.status === 'completed' ? 'text-green-400 border-green-500/30' :
-                                order.status === 'pending' ? 'text-yellow-400 border-yellow-500/30' :
-                                'text-white/70 border-white/20'
+                              className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest shadow-sm outline-none cursor-pointer transition-all ${
+                                order.status === 'completed' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' :
+                                order.status === 'pending' ? 'bg-yellow-50 text-yellow-600 border border-yellow-100' :
+                                'bg-gray-100 text-black/40 border-black/5'
                               }`}
                             >
                               <option value="pending">Pending</option>
@@ -625,27 +696,17 @@ export default function AdminDashboard() {
                               <option value="cancelled">Cancelled</option>
                             </select>
                           </td>
-                          <td className="p-4 text-right">
+                          <td className="p-6 text-right">
                             <div className="flex justify-end gap-2">
-                              <button 
-                                onClick={() => setSelectedOrder(order)}
-                                className="px-3 py-1 bg-white/10 hover:bg-white/20 rounded text-xs font-bold uppercase tracking-wider transition-colors"
-                              >
-                                View Details
-                              </button>
-                              <button 
-                                onClick={() => handleDeleteOrder(order.id)}
-                                className="px-3 py-1 bg-red-500/10 text-red-400 hover:bg-red-500/20 rounded text-xs font-bold uppercase tracking-wider transition-colors"
-                              >
-                                Delete
-                              </button>
+                              <button onClick={() => setSelectedOrder(order)} className="px-3 py-2 hover:bg-black hover:text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition-all border border-black/5">View Details</button>
+                              <button onClick={() => handleDeleteOrder(order.id)} className="px-3 py-2 hover:bg-red-500 hover:text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition-all border border-black/5 text-red-600">Delete</button>
                             </div>
                           </td>
                         </tr>
                       ))}
-                      {orders.length === 0 && (
-                        <tr><td colSpan={6} className="p-8 text-center text-white/40">No orders found.</td></tr>
-                      )}
+                        {orders.length === 0 && (
+                          <tr><td colSpan={6} className="p-16 text-center text-black/20 font-black uppercase tracking-widest text-xs">No active orders found.</td></tr>
+                        )}
                     </tbody>
                   </table>
                 </div>
@@ -653,52 +714,52 @@ export default function AdminDashboard() {
                 {/* Order Details Modal */}
                 {selectedOrder && (
                   <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-                    <div className="bg-[#0a0a0a] border border-white/10 rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
-                      <div className="p-6 border-b border-white/10 flex justify-between items-center bg-white/5">
-                        <h2 className="text-xl font-black uppercase tracking-widest">Order Details #{selectedOrder.id}</h2>
-                        <button onClick={() => setSelectedOrder(null)} className="text-white/50 hover:text-white transition-colors text-2xl">&times;</button>
+                    <div className="bg-white border border-black/[0.03] rounded-[2.5rem] w-full max-w-2xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
+                      <div className="p-6 border-b border-black/[0.03] flex justify-between items-center bg-gray-50">
+                        <h2 className="text-xl font-black uppercase tracking-widest text-black">Order Details #{selectedOrder.id}</h2>
+                        <button onClick={() => setSelectedOrder(null)} className="text-black/30 hover:text-black transition-colors text-2xl">&times;</button>
                       </div>
                       
                       <div className="p-8 space-y-8 overflow-y-auto max-h-[70vh]">
                         {/* Customer Info */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 bg-white/5 p-6 rounded-xl border border-white/5">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 bg-gray-50 p-6 rounded-xl border border-black/[0.03]">
                           <div>
-                            <p className="text-white/40 text-xs font-bold uppercase tracking-widest mb-3">Order Details</p>
+                            <p className="text-black/40 text-xs font-bold uppercase tracking-widest mb-3">Order Details</p>
                             <div className="space-y-4">
                               <div>
-                                <p className="text-xs text-white/30 uppercase tracking-tighter">Customer Name</p>
-                                <p className="font-bold">{selectedOrder.customer_name || selectedOrder.user_name || 'Guest'}</p>
+                                <p className="text-xs text-black/30 uppercase tracking-tighter">Customer Name</p>
+                                <p className="font-bold text-black">{selectedOrder.customer_name || selectedOrder.user_name || 'Guest'}</p>
                               </div>
                               <div>
-                                <p className="text-xs text-white/30 uppercase tracking-tighter">Email</p>
-                                <p className="font-semibold text-sm">{selectedOrder.customer_email || selectedOrder.user_email}</p>
+                                <p className="text-xs text-black/30 uppercase tracking-tighter">Email</p>
+                                <p className="font-semibold text-sm text-black">{selectedOrder.customer_email || selectedOrder.user_email}</p>
                               </div>
                               <div>
-                                <p className="text-xs text-white/30 uppercase tracking-tighter">Phone</p>
-                                <p className="font-semibold text-sm">{selectedOrder.customer_phone || 'N/A'}</p>
+                                <p className="text-xs text-black/30 uppercase tracking-tighter">Phone</p>
+                                <p className="font-semibold text-sm text-black">{selectedOrder.customer_phone || 'N/A'}</p>
                               </div>
                             </div>
                           </div>
                           <div>
-                            <p className="text-white/40 text-xs font-bold uppercase tracking-widest mb-3">Shipping Info</p>
+                            <p className="text-black/40 text-xs font-bold uppercase tracking-widest mb-3">Shipping Info</p>
                             <div className="space-y-4">
                               <div>
-                                <p className="text-xs text-white/30 uppercase tracking-tighter">Address</p>
-                                <p className="text-sm font-medium leading-relaxed">{selectedOrder.shipping_address || 'N/A'}</p>
+                                <p className="text-xs text-black/30 uppercase tracking-tighter">Address</p>
+                                <p className="text-sm font-medium leading-relaxed text-black">{selectedOrder.shipping_address || 'N/A'}</p>
                               </div>
                               <div className="flex gap-8">
                                 <div>
-                                  <p className="text-xs text-white/30 uppercase tracking-tighter">City</p>
-                                  <p className="font-bold text-sm tracking-wide">{selectedOrder.city || 'N/A'}</p>
+                                  <p className="text-xs text-black/30 uppercase tracking-tighter">City</p>
+                                  <p className="font-bold text-sm tracking-wide text-black">{selectedOrder.city || 'N/A'}</p>
                                 </div>
                                 <div>
-                                  <p className="text-xs text-white/30 uppercase tracking-tighter">PIN Code</p>
-                                  <p className="font-bold text-sm tracking-widest">{selectedOrder.pin_code || 'N/A'}</p>
+                                  <p className="text-xs text-black/30 uppercase tracking-tighter">PIN Code</p>
+                                  <p className="font-bold text-sm tracking-widest text-black">{selectedOrder.pin_code || 'N/A'}</p>
                                 </div>
                               </div>
                               <div>
-                                <p className="text-xs text-white/30 uppercase tracking-tighter">Payment</p>
-                                <p className="font-bold text-xs uppercase tracking-widest bg-purple-500/20 text-purple-300 px-2 py-1 rounded inline-block">
+                                <p className="text-xs text-black/30 uppercase tracking-tighter">Payment</p>
+                                <p className="font-bold text-xs uppercase tracking-widest bg-purple-100 text-purple-600 px-2 py-1 rounded inline-block">
                                   {selectedOrder.payment_method || 'N/A'}
                                 </p>
                               </div>
@@ -707,29 +768,29 @@ export default function AdminDashboard() {
                         </div>
 
                         {selectedOrder.shiprocket_order_id && (
-                          <div className="bg-cyan-500/10 border border-cyan-500/30 p-4 rounded-xl flex justify-between items-center">
+                          <div className="bg-cyan-50/10 border border-cyan-100 p-4 rounded-xl flex justify-between items-center">
                             <div>
-                              <p className="text-[10px] text-cyan-400 font-bold uppercase tracking-widest mb-1">Shiprocket Sync Active</p>
-                              <p className="text-sm font-mono">Order ID: <span className="text-white">{selectedOrder.shiprocket_order_id}</span></p>
+                              <p className="text-[10px] text-cyan-600 font-bold uppercase tracking-widest mb-1">Shiprocket Sync Active</p>
+                              <p className="text-sm font-mono text-black">Order ID: <span className="text-black">{selectedOrder.shiprocket_order_id}</span></p>
                             </div>
                             <div className="text-right">
-                              <p className="text-[10px] text-white/40 uppercase tracking-tighter">Shipment ID</p>
-                              <p className="text-xs font-mono text-white/70">{selectedOrder.shiprocket_shipment_id}</p>
+                              <p className="text-[10px] text-black/40 uppercase tracking-tighter">Shipment ID</p>
+                              <p className="text-xs font-mono text-black/70">{selectedOrder.shiprocket_shipment_id}</p>
                             </div>
                           </div>
                         )}
 
                         {/* Order Items */}
                         <div>
-                          <p className="text-white/40 text-xs font-bold uppercase tracking-widest mb-4">Line Items</p>
+                          <p className="text-black/40 text-xs font-bold uppercase tracking-widest mb-4">Line Items</p>
                           <div className="space-y-4">
                             {(() => {
                               try {
                                 const items = JSON.parse(selectedOrder.items || '[]');
-                                if (items.length === 0) return <p className="text-white/40 italic">No item details available for this order.</p>;
+                                if (items.length === 0) return <p className="text-black/40 italic">No item details available for this order.</p>;
                                 return items.map((item: any, idx: number) => (
-                                  <div key={idx} className="flex gap-4 items-center bg-white/5 p-4 rounded-xl border border-white/5 hover:bg-white/[0.07] transition-colors">
-                                    <div className="w-12 h-16 bg-black/50 rounded overflow-hidden flex-shrink-0 border border-white/10">
+                                  <div key={idx} className="flex gap-4 items-center bg-gray-50 p-4 rounded-xl border border-black/[0.03] hover:bg-gray-100 transition-colors">
+                                    <div className="w-12 h-16 bg-black/50 rounded overflow-hidden flex-shrink-0 border border-black/5">
                                       {item.image_url && (
                                         <img 
                                           src={resolveImageUrl(item.image_url)} 
@@ -739,46 +800,46 @@ export default function AdminDashboard() {
                                       )}
                                     </div>
                                     <div className="flex-grow">
-                                      <p className="font-bold text-sm tracking-tight">{item.name}</p>
+                                      <p className="font-bold text-sm tracking-tight text-black">{item.name}</p>
                                       <div className="flex gap-3 mt-1.5">
                                         <div className="flex flex-col">
-                                          <span className="text-[9px] uppercase font-bold text-white/20 tracking-tighter">Size</span>
-                                          <span className="text-[11px] font-black text-white/70">{item.size || 'N/A'}</span>
+                                          <span className="text-[9px] uppercase font-bold text-black/20 tracking-tighter">Size</span>
+                                          <span className="text-[11px] font-black text-black/70">{item.size || 'N/A'}</span>
                                         </div>
                                         <div className="flex flex-col">
-                                          <span className="text-[9px] uppercase font-bold text-white/20 tracking-tighter">Quantity</span>
-                                          <span className="text-[11px] font-black text-white/70">{item.quantity}</span>
+                                          <span className="text-[9px] uppercase font-bold text-black/20 tracking-tighter">Quantity</span>
+                                          <span className="text-[11px] font-black text-black/70">{item.quantity}</span>
                                         </div>
                                         {item.color && (
                                           <div className="flex flex-col">
-                                            <span className="text-[9px] uppercase font-bold text-white/20 tracking-tighter">Color</span>
-                                            <span className="text-[11px] font-black text-white/70">{item.color}</span>
+                                            <span className="text-[9px] uppercase font-bold text-black/20 tracking-tighter">Color</span>
+                                            <span className="text-[11px] font-black text-black/70">{item.color}</span>
                                           </div>
                                         )}
                                       </div>
                                     </div>
                                     <div className="text-right">
-                                      <p className="font-bold text-transparent bg-clip-text bg-gradient-to-r from-white to-white/60">₹{item.price * item.quantity}</p>
+                                      <p className="font-bold text-black">₹{item.price * item.quantity}</p>
                                     </div>
                                   </div>
                                 ));
                               } catch (e) {
-                                return <p className="text-white/40 italic">Error parsing order items.</p>;
+                                return <p className="text-black/40 italic">Error parsing order items.</p>;
                               }
                             })()}
                           </div>
                         </div>
 
                         {/* Order Summary */}
-                        <div className="border-t border-white/10 pt-6 mt-6">
+                        <div className="border-t border-black/[0.03] pt-6 mt-6">
                           <div className="flex justify-between items-center">
                             <div>
-                              <p className="text-white/30 text-[10px] uppercase tracking-[0.2em] mb-1">Total Billable</p>
-                              <span className="font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-cyan-400 text-4xl">₹{selectedOrder.total_amount}</span>
+                              <p className="text-black/30 text-[10px] uppercase tracking-[0.2em] mb-1">Total Billable</p>
+                              <span className="font-black text-black text-4xl">₹{selectedOrder.total_amount}</span>
                             </div>
                             <div className="text-right">
-                              <p className="text-white/30 text-[10px] uppercase tracking-[0.2em] mb-1">Status</p>
-                              <span className="px-3 py-1 bg-white/10 rounded-full text-[10px] font-black uppercase tracking-widest text-white/80 border border-white/20">
+                              <p className="text-black/30 text-[10px] uppercase tracking-[0.2em] mb-1">Status</p>
+                              <span className="px-3 py-1 bg-gray-100 rounded-full text-[10px] font-black uppercase tracking-widest text-black/80 border border-black/5">
                                 {selectedOrder.status}
                               </span>
                             </div>
@@ -786,18 +847,18 @@ export default function AdminDashboard() {
                         </div>
                       </div>
                       
-                      <div className="p-6 bg-white/5 border-t border-white/10 flex justify-end gap-4">
+                      <div className="p-6 bg-gray-50 border-t border-black/[0.03] flex justify-end gap-4">
                         {!selectedOrder.shiprocket_order_id && (
                           <button 
                             onClick={() => handleShipRocket(selectedOrder.id)}
-                            className="px-6 py-2 bg-gradient-to-r from-purple-600 to-cyan-600 text-white rounded-lg font-black uppercase tracking-widest text-xs hover:opacity-90 shadow-[0_0_15px_rgba(168,85,247,0.3)] transition-all"
+                            className="px-6 py-2 bg-black text-white rounded-lg font-black uppercase tracking-widest text-xs hover:bg-neutral-800 shadow-xl transition-all"
                           >
                             Ship with Shiprocket
                           </button>
                         )}
                         <button 
                           onClick={() => setSelectedOrder(null)}
-                          className="px-6 py-2 border border-white/20 rounded-lg font-bold uppercase tracking-widest text-xs hover:bg-white/5 transition-colors"
+                          className="px-6 py-2 border border-black/5 rounded-lg font-bold uppercase tracking-widest text-xs hover:bg-gray-100 transition-colors text-black"
                         >
                           Close
                         </button>
@@ -809,84 +870,226 @@ export default function AdminDashboard() {
             )}
 
             {activeTab === 'categories' && (
-              <div className="animate-in fade-in duration-500">
-                <div className="flex justify-between items-center mb-8">
-                  <h1 className="text-3xl font-bold">Manage Categories</h1>
+              <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
+                <div className="flex justify-between items-center mb-12">
+                  <h1 className="text-4xl font-black text-black uppercase tracking-tighter">Category Management</h1>
                   <button 
-                    onClick={() => setShowCategoryForm(!showCategoryForm)}
-                    className="bg-purple-600 hover:bg-purple-500 text-white px-4 py-2 flex items-center gap-2 rounded text-sm font-bold shadow-lg transition-colors"
+                    onClick={() => {
+                      setCategoryForm({ name: '', description: '' });
+                      setShowCategoryForm(!showCategoryForm);
+                    }}
+                    className="bg-black hover:bg-neutral-800 text-white px-8 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-2xl transition-all"
                   >
-                    {showCategoryForm ? 'Cancel' : '+ Add Category'}
+                    {showCategoryForm ? 'Close Terminal' : 'Design Core Division'}
                   </button>
                 </div>
 
                 {showCategoryForm && (
-                  <div className="bg-white/5 border border-purple-500/30 p-6 rounded-xl mb-8 animate-in slide-in-from-top-4 duration-300">
-                    <h2 className="text-xl font-bold mb-4">Add New Category</h2>
-                    <form onSubmit={handleCategorySubmit} className="space-y-4">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="bg-white border border-black/[0.03] p-10 rounded-[2.5rem] mb-12 shadow-2xl animate-in slide-in-from-top-6 duration-500">
+                    <h2 className="text-xl font-black text-black uppercase tracking-tight mb-8">Add New Category</h2>
+                    <form onSubmit={handleCategorySubmit} className="space-y-8">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <div>
-                          <label className="block text-sm text-white/60 mb-1">Category Name</label>
+                          <label className="block text-[10px] font-black text-black/30 mb-3 uppercase tracking-widest">Category Name</label>
                           <input 
                             type="text" 
                             required 
                             value={categoryForm.name} 
                             onChange={e => setCategoryForm({...categoryForm, name: e.target.value})} 
-                            className="w-full bg-black border border-white/20 rounded p-2 focus:border-purple-500 outline-none" 
-                            placeholder="e.g., Summer Wear"
+                            className="w-full bg-gray-50 border border-black/[0.05] rounded-2xl p-4 focus:bg-white focus:border-black outline-none transition-all font-bold placeholder:text-black/20" 
+                            placeholder="e.g., PHANTS"
                           />
                         </div>
                         <div>
-                          <label className="block text-sm text-white/60 mb-1">Description</label>
+                          <label className="block text-[10px] font-black text-black/30 mb-3 uppercase tracking-widest">Description</label>
                           <input 
                             type="text" 
                             value={categoryForm.description} 
                             onChange={e => setCategoryForm({...categoryForm, description: e.target.value})} 
-                            className="w-full bg-black border border-white/20 rounded p-2 focus:border-purple-500 outline-none" 
-                            placeholder="Brief description"
+                            className="w-full bg-gray-50 border border-black/[0.05] rounded-2xl p-4 focus:bg-white focus:border-black outline-none transition-all font-medium placeholder:text-black/20" 
+                            placeholder="Brief description of category"
                           />
                         </div>
                       </div>
-                      <button type="submit" className="bg-white text-black font-bold px-6 py-2 rounded hover:bg-gray-200 transition-colors uppercase text-sm tracking-wider">
-                        Save Category
+                      <button type="submit" className="w-full bg-black text-white font-black px-10 py-6 rounded-2xl hover:bg-neutral-800 transition-all uppercase text-[10px] tracking-[0.3em] shadow-2xl">
+                        Add Category
                       </button>
                     </form>
                   </div>
                 )}
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                   {categories.map((cat) => (
-                    <div key={cat.id} className="bg-white/5 border border-white/10 p-6 rounded-xl hover:border-purple-500/30 transition-all group relative">
-                      <div className="flex justify-between items-start mb-4">
+                    <div key={cat.id} className="bg-white border border-black/[0.03] p-10 rounded-[2.5rem] shadow-xl hover:shadow-2xl transition-all group relative">
+                      <div className="flex justify-between items-start mb-6">
                         <div>
-                          <h3 className="text-xl font-bold text-white group-hover:text-purple-400 transition-colors">{cat.name}</h3>
-                          <p className="text-white/40 text-xs mt-1">{cat.description || 'No description provided'}</p>
+                          <h3 className="text-2xl font-black text-black uppercase tracking-tight group-hover:text-purple-600 transition-colors uppercase">{cat.name}</h3>
+                          <p className="text-black/30 text-[10px] font-black uppercase tracking-widest mt-2">{cat.description || 'No data stream available'}</p>
                         </div>
                         <button 
                           onClick={() => handleDeleteCategory(cat.id)}
-                          className="text-white/20 hover:text-red-500 transition-colors p-2"
+                          className="w-12 h-12 flex items-center justify-center rounded-2xl bg-red-50 text-red-600 border border-red-100 shadow-sm transition-all hover:bg-red-500 hover:text-white group-hover:scale-110"
                           title="Delete Category"
                         >
-                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
                         </button>
                       </div>
-                      <div className="flex items-center gap-2 mt-4 text-[10px] font-bold text-white/30 uppercase tracking-widest">
-                        <span className="w-1.5 h-1.5 bg-purple-500 rounded-full"></span>
-                        Active Category
+                      <div className="flex items-center gap-3 mt-6 text-[9px] font-black text-black/20 uppercase tracking-[0.3em]">
+                        <span className="w-2 h-2 bg-emerald-500 rounded-full shadow-[0_0_10px_rgba(16,185,129,0.5)]"></span>
+                        Category ID: {cat.id}
                       </div>
                     </div>
                   ))}
                   {categories.length === 0 && (
-                    <div className="col-span-full p-20 text-center border-2 border-dashed border-white/5 rounded-2xl">
-                      <p className="text-white/20 font-bold uppercase tracking-widest text-sm">No custom categories found</p>
+                    <div className="col-span-full py-32 text-center bg-white border-2 border-dashed border-black/5 rounded-[3rem]">
+                      <p className="text-black/10 font-black uppercase tracking-[0.4em] text-xs underline underline-offset-8 decoration-black/5">No custom divisions recognized</p>
                     </div>
                   )}
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'fab' && (
+              <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 max-w-4xl">
+                <h1 className="text-4xl font-black text-black uppercase tracking-tighter mb-4">FAB Section Manager</h1>
+                <p className="text-black/40 text-sm font-bold uppercase tracking-widest mb-12">Control the storytelling reel on your homepage</p>
+                
+                <div className="bg-white border border-black/[0.03] rounded-[2.5rem] p-12 shadow-2xl">
+                  <form onSubmit={handleFabUpdate} className="space-y-10">
+                    <div className="grid grid-cols-1 gap-10">
+                      <div>
+                        <label className="block text-[10px] font-black uppercase tracking-[0.3em] text-black/30 mb-4">Section Main Title</label>
+                        <input 
+                          type="text" 
+                          value={fabForm.title}
+                          onChange={(e) => setFabForm({...fabForm, title: e.target.value})}
+                          className="w-full bg-gray-50 border border-black/5 rounded-2xl px-6 py-5 text-sm font-black uppercase tracking-tight focus:border-[#2EABEB] outline-none transition-all"
+                          placeholder="WELCOME TO THE FLIPSIDE"
+                        />
+                      </div>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                        <div className="space-y-6 p-8 bg-[#2EABEB]/5 rounded-[2rem] border border-[#2EABEB]/10">
+                          <label className="block text-[10px] font-black uppercase tracking-[0.3em] text-[#2EABEB] mb-2">Stat Point 01</label>
+                          <input 
+                            type="text" 
+                            value={fabForm.stat1_title}
+                            onChange={(e) => setFabForm({...fabForm, stat1_title: e.target.value})}
+                            className="w-full bg-white border border-black/5 rounded-xl px-4 py-3 text-xs font-black uppercase"
+                            placeholder="5 YEARS"
+                          />
+                          <input 
+                            type="text" 
+                            value={fabForm.stat1_subtitle}
+                            onChange={(e) => setFabForm({...fabForm, stat1_subtitle: e.target.value})}
+                            className="w-full bg-white border border-black/5 rounded-xl px-4 py-3 text-xs font-black uppercase text-black/40"
+                            placeholder="OF CREATING TRENDS"
+                          />
+                        </div>
+                        
+                        <div className="space-y-6 p-8 bg-[#FF007A]/5 rounded-[2rem] border border-[#FF007A]/10">
+                          <label className="block text-[10px] font-black uppercase tracking-[0.3em] text-[#FF007A] mb-2">Stat Point 02</label>
+                          <input 
+                            type="text" 
+                            value={fabForm.stat2_title}
+                            onChange={(e) => setFabForm({...fabForm, stat2_title: e.target.value})}
+                            className="w-full bg-white border border-black/5 rounded-xl px-4 py-3 text-xs font-black uppercase"
+                            placeholder="2.5 MILLION+"
+                          />
+                          <input 
+                            type="text" 
+                            value={fabForm.stat2_subtitle}
+                            onChange={(e) => setFabForm({...fabForm, stat2_subtitle: e.target.value})}
+                            className="w-full bg-white border border-black/5 rounded-xl px-4 py-3 text-xs font-black uppercase text-black/40"
+                            placeholder="STYLISH CUSTOMERS"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-[10px] font-black uppercase tracking-[0.3em] text-black/30 mb-4">Background Reel (Video)</label>
+                        <div className="flex flex-col md:flex-row gap-8 items-start">
+                          <div className="w-full md:w-64 aspect-[9/16] bg-black rounded-[2rem] overflow-hidden shadow-2xl relative group">
+                            {fabReelFile ? (
+                                <div className="absolute inset-0 flex items-center justify-center bg-black/80 z-20">
+                                    <span className="text-[10px] font-black text-white uppercase text-center p-4">New video ready<br/>to sync</span>
+                                </div>
+                            ) : null}
+                            {fabForm.video_url ? (
+                              <video 
+                                src={resolveImageUrl(fabForm.video_url)} 
+                                autoPlay muted loop playsInline 
+                                className="w-full h-full object-cover opacity-60"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-white/20 font-black uppercase text-[10px]">No Reel Set</div>
+                            )}
+                          </div>
+                          
+                          <div className="flex-1 space-y-6">
+                            <p className="text-xs text-black/40 font-bold leading-relaxed">
+                              Upload a high-quality vertical MP4 video for the FAB section background. Suggested aspect ratio is 9:16.
+                            </p>
+                            <label className="inline-block px-8 py-4 bg-gray-50 border border-black/5 rounded-xl cursor-pointer hover:bg-gray-100 transition-all font-black uppercase text-[10px] tracking-widest text-black/60">
+                              Choose New Reel
+                              <input 
+                                type="file" 
+                                accept="video/*" 
+                                onChange={(e) => setFabReelFile(e.target.files?.[0] || null)}
+                                className="hidden" 
+                              />
+                            </label>
+                            {fabReelFile && <span className="block text-[10px] font-black text-emerald-600 uppercase tracking-widest">✓ {fabReelFile.name}</span>}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="pt-10 border-t border-black/5">
+                      <button 
+                        type="submit" 
+                        disabled={savingFab}
+                        className={`w-full py-6 rounded-2xl bg-black text-white font-black uppercase tracking-widest text-xs shadow-2xl hover:bg-neutral-800 transition-all ${savingFab ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      >
+                        {savingFab ? 'Syncing Content...' : 'Update FAB Section'}
+                      </button>
+                    </div>
+                  </form>
                 </div>
               </div>
             )}
           </>
         )}
       </main>
+
+      {/* Custom Confirmation Modal */}
+      {confirmModal && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-300">
+          <div className="bg-white border border-black/[0.03] rounded-[2.5rem] w-full max-w-md overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="p-10 text-center">
+              <div className="w-20 h-20 bg-red-50 text-red-600 rounded-full flex items-center justify-center mx-auto mb-8 shadow-inner">
+                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
+              </div>
+              <h2 className="text-2xl font-black text-black uppercase tracking-tight mb-4">{confirmModal.title}</h2>
+              <p className="text-black/40 text-sm font-bold leading-relaxed mb-10 px-4">{confirmModal.message}</p>
+              <div className="flex gap-4">
+                <button 
+                  onClick={() => setConfirmModal(null)}
+                  className="flex-1 py-5 rounded-2xl bg-gray-50 text-black font-black uppercase text-[10px] tracking-widest hover:bg-gray-100 transition-all border border-black/5"
+                >
+                  Cancel
+                </button>
+                <button 
+                  onClick={confirmModal.onConfirm}
+                  className="flex-1 py-5 rounded-2xl bg-red-600 text-white font-black uppercase text-[10px] tracking-widest hover:bg-red-700 transition-all shadow-xl shadow-red-500/20"
+                >
+                  Confirm Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

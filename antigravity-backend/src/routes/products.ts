@@ -7,7 +7,10 @@ import { authenticateAdmin } from '../middleware/auth';
 const router = express.Router();
 
 const storage = multer.diskStorage({
-  destination: 'uploads/',
+  destination: (req, file, cb) => {
+    const uploadPath = process.env.UPLOAD_DIR || 'uploads/';
+    cb(null, uploadPath);
+  },
   filename: (req, file, cb) => cb(null, Date.now() + path.extname(file.originalname))
 });
 const upload = multer({ storage });
@@ -156,10 +159,19 @@ router.put('/:id', authenticateAdmin, productUpload, async (req, res) => {
 // Delete Product (Admin Only)
 router.delete('/:id', authenticateAdmin, async (req, res) => {
   try {
+    console.log('Attempting to delete product with ID:', req.params.id);
     const db = await getDb();
-    await db.run('DELETE FROM products WHERE id = ?', [req.params.id]);
+    const result = await db.run('DELETE FROM products WHERE id = ?', [req.params.id]);
+    
+    if (result && result.changes === 0) {
+      console.warn('Product deletion attempt: No such ID found.');
+      return res.status(404).json({ error: 'Product not found' });
+    }
+    
+    console.log('Product deleted successfully');
     res.json({ message: 'Product deleted successfully' });
   } catch (err) {
+    console.error('Error deleting product:', err);
     res.status(500).json({ error: 'Error deleting product' });
   }
 });

@@ -82,34 +82,34 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#050505] flex items-center justify-center p-4">
-      <div className="w-full max-w-md bg-white/5 border border-white/10 rounded-2xl p-8 backdrop-blur-md relative overflow-hidden">
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+      <div className="w-full max-w-lg bg-white border border-black/5 rounded-[3rem] p-12 shadow-[0_40px_80px_-15px_rgba(0,0,0,0.1)] relative overflow-hidden">
         
         {/* Decorative elements */}
-        <div className="absolute top-0 right-0 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl translate-x-1/2 -translate-y-1/2 pointer-events-none"></div>
-        <div className="absolute bottom-0 left-0 w-64 h-64 bg-cyan-500/10 rounded-full blur-3xl -translate-x-1/2 translate-y-1/2 pointer-events-none"></div>
+        <div className="absolute top-0 right-0 w-80 h-80 bg-purple-500/5 rounded-full blur-3xl translate-x-1/2 -translate-y-1/2 pointer-events-none"></div>
+        <div className="absolute bottom-0 left-0 w-80 h-80 bg-cyan-500/5 rounded-full blur-3xl -translate-x-1/2 translate-y-1/2 pointer-events-none"></div>
         
         <div className="relative z-10">
-          <div className="text-center mb-10">
-            <h1 className="text-3xl font-black uppercase tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-cyan-400 mb-2">
-              {isAdminLogin ? 'Admin Portal' : 'Antigravity'}
+          <div className="text-center mb-12">
+            <h1 className="text-4xl font-black uppercase tracking-[0.2em] text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-cyan-600 mb-4">
+              {isAdminLogin ? 'Operations' : 'Rarewingz'}
             </h1>
-            <p className="text-white/60 text-sm">
+            <p className="text-black/40 text-[11px] font-black uppercase tracking-widest">
               {isAdminLogin 
-                ? 'Authorized personnel only.'
-                : isLogin ? 'Welcome back. Prepare for liftoff.' : 'Join the revolution. Create your account.'}
+                ? 'Secured terminal access'
+                : isLogin ? 'Authenticate to proceed' : 'Join the new dimension'}
             </p>
           </div>
 
-          <div className="flex bg-black/50 p-1 rounded-lg mb-8 border border-white/10">
+          <div className="flex bg-gray-100 p-1.5 rounded-2xl mb-10 border border-black/5">
             <button 
-              className={`flex-1 py-2 text-sm font-bold uppercase tracking-wider rounded-md transition-all ${isLogin ? 'bg-white/10 text-white shadow-sm' : 'text-white/50 hover:text-white'}`}
+              className={`flex-1 py-3 text-xs font-black uppercase tracking-[0.2em] rounded-xl transition-all ${isLogin ? 'bg-white text-black shadow-lg' : 'text-black/30 hover:text-black'}`}
               onClick={() => { setIsLogin(true); setError(''); }}
             >
               Login
             </button>
             <button 
-              className={`flex-1 py-2 text-sm font-bold uppercase tracking-wider rounded-md transition-all ${!isLogin ? 'bg-white/10 text-white shadow-sm' : 'text-white/50 hover:text-white'}`}
+              className={`flex-1 py-3 text-xs font-black uppercase tracking-[0.2em] rounded-xl transition-all ${!isLogin ? 'bg-white text-black shadow-lg' : 'text-black/30 hover:text-black'}`}
               onClick={() => { setIsLogin(false); setError(''); }}
             >
               Register
@@ -117,32 +117,32 @@ export default function LoginPage() {
           </div>
 
           {error && (
-            <div className="bg-red-500/10 border border-red-500/50 text-red-500 text-sm p-3 rounded-lg mb-6 text-center animate-in fade-in duration-300">
+            <div className="bg-red-50 border border-red-100 text-red-600 text-[10px] font-black uppercase tracking-widest p-4 rounded-xl mb-8 text-center animate-in fade-in duration-300">
               {error}
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleSubmit} className="space-y-6">
             {!isLogin && (
-              <div className="space-y-5 animate-in fade-in slide-in-from-top-4 duration-300">
+              <div className="space-y-6 animate-in fade-in slide-in-from-top-4 duration-300">
                 <div>
-                  <label className="block text-xs font-bold text-white/60 uppercase tracking-widest mb-2">Full Name</label>
+                  <label className="block text-[10px] font-black text-black/40 uppercase tracking-widest mb-3">Full Name</label>
                   <input 
                     type="text" 
                     required={!isLogin}
-                    className="w-full bg-black/50 border border-white/10 text-white rounded-lg p-3.5 focus:border-purple-500 focus:ring-1 focus:ring-purple-500 outline-none transition-all placeholder:text-white/20" 
-                    placeholder="John Doe"
+                    className="w-full bg-gray-50 border border-black/5 text-black rounded-2xl p-4 focus:bg-white focus:border-black/20 outline-none transition-all placeholder:text-black/20 font-medium" 
+                    placeholder="Enter full name"
                     value={formData.name}
                     onChange={(e) => setFormData({...formData, name: e.target.value})}
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-white/60 uppercase tracking-widest mb-2">Phone Number (Optional)</label>
-                  <div className="flex gap-2">
+                  <label className="block text-[10px] font-black text-black/40 uppercase tracking-widest mb-3">Communication</label>
+                  <div className="flex gap-3">
                     <select 
                       value={formData.countryCode}
                       onChange={(e) => setFormData({...formData, countryCode: e.target.value})}
-                      className="bg-black/50 border border-white/10 text-white rounded-lg p-3.5 focus:border-purple-500 outline-none transition-all w-28 text-sm"
+                      className="bg-gray-50 border border-black/5 text-black rounded-2xl p-4 focus:bg-white focus:border-black/20 outline-none transition-all w-32 text-xs font-bold"
                     >
                       {COUNTRY_CODES.map(c => (
                         <option key={c.code} value={c.code}>{c.code}</option>
@@ -150,8 +150,8 @@ export default function LoginPage() {
                     </select>
                     <input 
                       type="tel"
-                      className="flex-grow bg-black/50 border border-white/10 text-white rounded-lg p-3.5 focus:border-purple-500 focus:ring-1 focus:ring-purple-500 outline-none transition-all placeholder:text-white/20" 
-                      placeholder="00000 00000"
+                      className="flex-grow bg-gray-50 border border-black/5 text-black rounded-2xl p-4 focus:bg-white focus:border-black/20 outline-none transition-all placeholder:text-black/20 font-medium" 
+                      placeholder="Phone number"
                       value={formData.phone}
                       onChange={(e) => {
                         const cleaned = e.target.value.replace(/\D/g, '');
@@ -164,26 +164,26 @@ export default function LoginPage() {
             )}
             
             <div>
-              <label className="block text-xs font-bold text-white/60 uppercase tracking-widest mb-2">Email Address</label>
+              <label className="block text-[10px] font-black text-black/40 uppercase tracking-widest mb-3">Email Address</label>
               <input 
                 type="email" 
                 required
-                className="w-full bg-black/50 border border-white/10 text-white rounded-lg p-3.5 focus:border-purple-500 focus:ring-1 focus:ring-purple-500 outline-none transition-all placeholder:text-white/20" 
-                placeholder="you@space.com"
+                className="w-full bg-gray-50 border border-black/5 text-black rounded-2xl p-4 focus:bg-white focus:border-black/20 outline-none transition-all placeholder:text-black/20 font-medium" 
+                placeholder="name@example.com"
                 value={formData.email}
                 onChange={(e) => setFormData({...formData, email: e.target.value})}
               />
             </div>
             
             <div>
-              <div className="flex justify-between items-center mb-2">
-                <label className="block text-xs font-bold text-white/60 uppercase tracking-widest">Password</label>
-                {isLogin && <a href="#" className="text-xs text-purple-400 hover:text-cyan-400 transition-colors">Forgot password?</a>}
+              <div className="flex justify-between items-center mb-3">
+                <label className="block text-[10px] font-black text-black/40 uppercase tracking-widest">Secret Keyword</label>
+                {isLogin && <a href="#" className="text-[10px] font-black uppercase text-purple-600 hover:text-cyan-600 transition-colors">Forgot?</a>}
               </div>
               <input 
                 type="password" 
                 required
-                className="w-full bg-black/50 border border-white/10 text-white rounded-lg p-3.5 focus:border-purple-500 focus:ring-1 focus:ring-purple-500 outline-none transition-all placeholder:text-white/20" 
+                className="w-full bg-gray-50 border border-black/5 text-black rounded-2xl p-4 focus:bg-white focus:border-black/20 outline-none transition-all placeholder:text-black/20 font-medium" 
                 placeholder="••••••••"
                 value={formData.password}
                 onChange={(e) => setFormData({...formData, password: e.target.value})}
@@ -193,16 +193,16 @@ export default function LoginPage() {
             <button 
               type="submit" 
               disabled={loading}
-              className="w-full mt-8 bg-gradient-to-r from-purple-600 to-cyan-600 text-white font-black uppercase tracking-widest py-4 rounded-lg hover:opacity-90 shadow-[0_0_20px_rgba(168,85,247,0.3)] transition-all flex justify-center items-center gap-2 disabled:opacity-50"
+              className="w-full mt-10 bg-black text-white font-black uppercase tracking-[0.2em] text-xs py-5 rounded-2xl hover:bg-neutral-800 shadow-2xl hover:shadow-black/20 transition-all flex justify-center items-center gap-3 disabled:opacity-50"
             >
               {loading ? (
                 <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-              ) : isLogin ? 'Launch' : 'Create Profile'}
+              ) : isLogin ? 'Access Portal' : 'Register Identity'}
             </button>
           </form>
           
-          <div className="mt-8 text-center">
-            <Link href="/" className="text-white/40 hover:text-white text-sm transition-colors border-b border-transparent hover:border-white">
+          <div className="mt-12 text-center">
+            <Link href="/" className="text-black/40 hover:text-black text-[10px] font-black uppercase tracking-widest transition-all border-b border-transparent hover:border-black pb-1">
               ← Return Home
             </Link>
           </div>

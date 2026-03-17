@@ -10,6 +10,7 @@ import productsRoutes from './routes/products';
 import ordersRoutes from './routes/orders';
 import adminRoutes from './routes/admin';
 import reviewsRoutes from './routes/reviews';
+import siteRoutes from './routes/site';
 
 dotenv.config();
 
@@ -24,7 +25,11 @@ app.use('/api/products', productsRoutes);
 app.use('/api/orders', ordersRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/reviews', reviewsRoutes);
-const uploadsDir = path.join(process.cwd(), 'uploads');
+app.use('/api/site', siteRoutes);
+const uploadsDir = process.env.UPLOAD_DIR 
+  ? path.resolve(process.env.UPLOAD_DIR) 
+  : path.join(process.cwd(), 'uploads');
+
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }
@@ -36,8 +41,14 @@ app.get('/api/health', (req, res) => {
 
 console.log('Attempting to initialize database...');
 initDb().then(() => {
-  app.listen(port, () => {
+  const server = app.listen(port, () => {
     console.log(`Server fully operational on port ${port}`);
+  });
+  server.on('error', (err) => {
+    console.error('Server failed to start or encountered an error:', err);
+  });
+  server.on('close', () => {
+    console.log('Server connection closed');
   });
 }).catch(err => {
   console.error('Failed to initialize database', err);

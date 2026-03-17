@@ -10,16 +10,16 @@ router.get('/stats', authenticateAdmin, async (req, res) => {
   try {
     const db = await getDb();
     
-    const usersCount = await db.get('SELECT COUNT(*)::int as count FROM users');
-    const productsCount = await db.get('SELECT COUNT(*)::int as count FROM products');
-    const ordersCount = await db.get('SELECT COUNT(*)::int as count FROM orders');
-    const totalRevenue = await db.get("SELECT SUM(total_amount)::float as revenue FROM orders WHERE status != 'cancelled'");
+    const usersCount = await db.get('SELECT COUNT(*) as count FROM users');
+    const productsCount = await db.get('SELECT COUNT(*) as count FROM products');
+    const ordersCount = await db.get('SELECT COUNT(*) as count FROM orders');
+    const totalRevenue = await db.get("SELECT SUM(total_amount) as revenue FROM orders WHERE status != 'cancelled'");
 
     res.json({
-      users: usersCount.count || 0,
-      products: productsCount.count || 0,
-      orders: ordersCount.count || 0,
-      revenue: totalRevenue.revenue || 0
+      users: parseInt(usersCount.count) || 0,
+      products: parseInt(productsCount.count) || 0,
+      orders: parseInt(ordersCount.count) || 0,
+      revenue: parseFloat(totalRevenue.revenue) || 0
     });
   } catch (err) {
     res.status(500).json({ error: 'Error fetching admin stats' });
@@ -58,10 +58,19 @@ router.put('/orders/:id/status', authenticateAdmin, async (req, res) => {
 // Delete Order
 router.delete('/orders/:id', authenticateAdmin, async (req, res) => {
   try {
+    console.log('Attempting to delete order with ID:', req.params.id);
     const db = await getDb();
-    await db.run('DELETE FROM orders WHERE id = ?', [req.params.id]);
+    const result = await db.run('DELETE FROM orders WHERE id = ?', [req.params.id]);
+    
+    if (result && result.changes === 0) {
+      console.warn('Order deletion attempt: No such ID found.');
+      return res.status(404).json({ error: 'Order not found' });
+    }
+    
+    console.log('Order deleted successfully');
     res.json({ message: 'Order deleted successfully' });
   } catch (err) {
+    console.error('Error deleting order:', err);
     res.status(500).json({ error: 'Error deleting order' });
   }
 });
@@ -152,10 +161,20 @@ router.post('/categories', authenticateAdmin, async (req, res) => {
 
 router.delete('/categories/:id', authenticateAdmin, async (req, res) => {
   try {
+    console.log('Attempting to delete category with ID:', req.params.id);
     const db = await getDb();
-    await db.run('DELETE FROM categories WHERE id = ?', [req.params.id]);
+    const result = await db.run('DELETE FROM categories WHERE id = ?', [req.params.id]);
+    
+    // Check if anything was deleted (result.changes for SQLite)
+    if (result && result.changes === 0) {
+      console.warn('Category deletion attempt: No such ID found.');
+      return res.status(404).json({ error: 'Category not found' });
+    }
+    
+    console.log('Category deleted successfully');
     res.json({ message: 'Category deleted' });
   } catch (err) {
+    console.error('Error deleting category:', err);
     res.status(500).json({ error: 'Error deleting category' });
   }
 });

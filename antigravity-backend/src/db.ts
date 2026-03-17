@@ -1,42 +1,94 @@
 import { Pool } from 'pg';
+import sqlite3 from 'sqlite3';
 import dotenv from 'dotenv';
 import bcrypt from 'bcryptjs';
+import path from 'path';
 
 dotenv.config();
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false
-  }
-});
+let pool: Pool | null = null;
+let sqliteDb: sqlite3.Database | null = null;
 
-// Compatibility layer for SQLite-like API
-export const dbWrapper = {
-  get: async (sql: string, params: any[] = []) => {
-    let count = 1;
-    const pgSql = sql.replace(/\?/g, () => `$${count++}`);
-    const res = await pool.query(pgSql, params);
-    return res.rows[0];
-  },
-  all: async (sql: string, params: any[] = []) => {
-    let count = 1;
-    const pgSql = sql.replace(/\?/g, () => `$${count++}`);
-    const res = await pool.query(pgSql, params);
-    return res.rows;
-  },
-  run: async (sql: string, params: any[] = []) => {
-    let count = 1;
-    // For INSERTs, append RETURNING id to get lastID behavior
-    let pgSql = sql.replace(/\?/g, () => `$${count++}`);
-    if (pgSql.trim().toUpperCase().startsWith('INSERT')) {
-      pgSql += ' RETURNING id';
+const databaseUrl = process.env.DATABASE_URL;
+
+if (databaseUrl) {
+  pool = new Pool({
+    connectionString: databaseUrl,
+    ssl: {
+      rejectUnauthorized: false
     }
-    const res = await pool.query(pgSql, params);
-    return { lastID: res.rows[0]?.id || null };
+  });
+  console.log('Using PostgreSQL database');
+} else {
+  const dbPath = process.env.DATABASE_PATH || path.join(process.cwd(), 'database.sqlite');
+  sqliteDb = new sqlite3.Database(dbPath);
+  console.log(`Using SQLite database at ${dbPath}`);
+}
+
+// Compatibility layer for a unified promise-based API
+export const dbWrapper = {
+  get: async (sql: string, params: any[] = []): Promise<any> => {
+    if (pool) {
+      let count = 1;
+      const pgSql = sql.replace(/\?/g, () => `$${count++}`);
+      const res = await pool.query(pgSql, params);
+      return res.rows[0];
+    } else {
+      return new Promise((resolve, reject) => {
+        sqliteDb!.get(sql, params, (err, row) => {
+          if (err) reject(err);
+          else resolve(row);
+        });
+      });
+    }
   },
-  exec: async (sql: string) => {
-    return pool.query(sql);
+  all: async (sql: string, params: any[] = []): Promise<any[]> => {
+    if (pool) {
+      let count = 1;
+      const pgSql = sql.replace(/\?/g, () => `$${count++}`);
+      const res = await pool.query(pgSql, params);
+      return res.rows;
+    } else {
+      return new Promise((resolve, reject) => {
+        sqliteDb!.all(sql, params, (err, rows) => {
+          if (err) reject(err);
+          else resolve(rows);
+        });
+      });
+    }
+  },
+  run: async (sql: string, params: any[] = []): Promise<any> => {
+    if (pool) {
+      let count = 1;
+      let pgSql = sql.replace(/\?/g, () => `$${count++}`);
+      if (pgSql.trim().toUpperCase().startsWith('INSERT')) {
+        pgSql += ' RETURNING id';
+      }
+      const res = await pool.query(pgSql, params);
+      return { lastID: (res.rows[0] as any)?.id || null };
+    } else {
+      return new Promise((resolve, reject) => {
+        sqliteDb!.run(sql, params, function(err) {
+          if (err) {
+            reject(err);
+          } else {
+            resolve({ lastID: this.lastID, changes: this.changes });
+          }
+        });
+      });
+    }
+  },
+  exec: async (sql: string): Promise<any> => {
+    if (pool) {
+      return pool.query(sql);
+    } else {
+      return new Promise((resolve, reject) => {
+        sqliteDb!.exec(sql, (err) => {
+          if (err) reject(err);
+          else resolve(null);
+        });
+      });
+    }
   }
 };
 
@@ -45,19 +97,25 @@ export async function getDb() {
 }
 
 export async function initDb() {
+  const isPostgres = !!pool;
+  
+  // Use compatible types for both DBs
+  const idType = isPostgres ? 'SERIAL PRIMARY KEY' : 'INTEGER PRIMARY KEY AUTOINCREMENT';
+  const timestampDefault = isPostgres ? 'CURRENT_TIMESTAMP' : "(datetime('now'))";
+
   await dbWrapper.exec(`
     CREATE TABLE IF NOT EXISTS users (
-      id SERIAL PRIMARY KEY,
+      id ${idType},
       name TEXT,
       email TEXT UNIQUE,
       password TEXT,
       phone TEXT,
       role TEXT DEFAULT 'user',
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      created_at TIMESTAMP DEFAULT ${isPostgres ? 'CURRENT_TIMESTAMP' : 'CURRENT_TIMESTAMP'}
     );
 
     CREATE TABLE IF NOT EXISTS products (
-      id SERIAL PRIMARY KEY,
+      id ${idType},
       name TEXT,
       description TEXT,
       price DECIMAL,
@@ -69,7 +127,7 @@ export async function initDb() {
       image_urls TEXT,
       video_url TEXT,
       is_bestseller INTEGER DEFAULT 0,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      created_at TIMESTAMP DEFAULT ${isPostgres ? 'CURRENT_TIMESTAMP' : 'CURRENT_TIMESTAMP'}
     );
 
     CREATE TABLE IF NOT EXISTS orders (
@@ -87,41 +145,76 @@ export async function initDb() {
       payment_method TEXT,
       shiprocket_order_id TEXT,
       shiprocket_shipment_id TEXT,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      created_at TIMESTAMP DEFAULT ${isPostgres ? 'CURRENT_TIMESTAMP' : 'CURRENT_TIMESTAMP'}
     );
 
     CREATE TABLE IF NOT EXISTS categories (
-      id SERIAL PRIMARY KEY,
+      id ${idType},
       name TEXT UNIQUE NOT NULL,
       description TEXT,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      created_at TIMESTAMP DEFAULT ${isPostgres ? 'CURRENT_TIMESTAMP' : 'CURRENT_TIMESTAMP'}
     );
 
     CREATE TABLE IF NOT EXISTS reviews (
-      id SERIAL PRIMARY KEY,
+      id ${idType},
       product_id INTEGER NOT NULL REFERENCES products(id),
       user_id INTEGER REFERENCES users(id),
       rating INTEGER NOT NULL,
       comment TEXT,
       user_name TEXT,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      created_at TIMESTAMP DEFAULT ${isPostgres ? 'CURRENT_TIMESTAMP' : 'CURRENT_TIMESTAMP'}
+    );
+
+    CREATE TABLE IF NOT EXISTS site_configs (
+      key TEXT PRIMARY KEY,
+      value TEXT
     );
   `);
 
-  // Auto-seed categories
-  await dbWrapper.exec(`
-    INSERT INTO categories (name) VALUES ('Men'), ('Women'), ('Accessories')
-    ON CONFLICT (name) DO NOTHING;
-  `);
+  // Auto-seed FAB section config if it doesn't exist
+  const fabConfig = await dbWrapper.get("SELECT value FROM site_configs WHERE key = 'fab_section'");
+  if (!fabConfig) {
+    const defaultFab = JSON.stringify({
+      title: 'WELCOME TO THE FLIPSIDE',
+      stat1_title: '5 YEARS',
+      stat1_subtitle: 'OF CREATING TRENDS',
+      stat2_title: '2.5 MILLION+',
+      stat2_subtitle: 'STYLISH CUSTOMERS',
+      video_url: ''
+    });
+    await dbWrapper.run("INSERT INTO site_configs (key, value) VALUES ('fab_section', ?)", [defaultFab]);
+  }
 
-  // Auto-seed Admin User (Ensure password matches even if user already existed)
+  // Auto-seed categories
+  if (isPostgres) {
+    await dbWrapper.exec(`
+      INSERT INTO categories (name) VALUES ('Men'), ('PHANTS'), ('Accessories')
+      ON CONFLICT (name) DO NOTHING;
+    `);
+  } else {
+    await dbWrapper.exec(`
+      INSERT OR IGNORE INTO categories (name) VALUES ('Men'), ('PHANTS'), ('Accessories');
+    `);
+  }
+
+  // Auto-seed Admin User
   const hashedPassword = await bcrypt.hash('demo123', 10);
-  await dbWrapper.run(`
-    INSERT INTO users (name, email, password, role) 
-    VALUES (?, ?, ?, ?)
-    ON CONFLICT (email) 
-    DO UPDATE SET password = EXCLUDED.password, role = 'admin'
-  `, ['Demo Admin', 'demo@gmail.com', hashedPassword, 'admin']);
+  if (isPostgres) {
+    await dbWrapper.run(`
+      INSERT INTO users (name, email, password, role) 
+      VALUES (?, ?, ?, ?)
+      ON CONFLICT (email) 
+      DO UPDATE SET password = EXCLUDED.password, role = 'admin'
+    `, ['Demo Admin', 'demo@gmail.com', hashedPassword, 'admin']);
+  } else {
+    // SQLite: Check if user exists first or use REPLACE (careful with IDs)
+    const existing = await dbWrapper.get('SELECT id FROM users WHERE email = ?', ['demo@gmail.com']);
+    if (existing) {
+      await dbWrapper.run('UPDATE users SET password = ?, role = ? WHERE email = ?', [hashedPassword, 'admin', 'demo@gmail.com']);
+    } else {
+      await dbWrapper.run('INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)', ['Demo Admin', 'demo@gmail.com', hashedPassword, 'admin']);
+    }
+  }
   console.log('Seeded/Updated Admin User: demo@gmail.com / demo123');
 
   // Auto-seed Products if no products exist
@@ -130,7 +223,7 @@ export async function initDb() {
     const mockProducts = [
       { name: 'Nebula Hoodie', description: 'Engineered for zero gravity.', price: 2999, category: 'Men', image_url: 'https://images.unsplash.com/photo-1556821840-3a63f95609a7?q=80&w=1587&auto=format&fit=crop', stock: 15, is_bestseller: 1 },
       { name: 'Horizon Cargo', description: 'Premium cyber fit.', price: 3499, category: 'Men', image_url: 'https://images.unsplash.com/photo-1624378439575-d10c6d1774ac?q=80&w=1587&auto=format&fit=crop', stock: 20 },
-      { name: 'Lunar Crop Top', description: 'Night sky design.', price: 1299, category: 'Women', image_url: 'https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?q=80&w=1740&auto=format&fit=crop', stock: 12, is_bestseller: 1 }
+      { name: 'Lunar Crop Top', description: 'Night sky design.', price: 1299, category: 'PHANTS', image_url: 'https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?q=80&w=1740&auto=format&fit=crop', stock: 12, is_bestseller: 1 }
     ];
     for (const p of mockProducts) {
       await dbWrapper.run(

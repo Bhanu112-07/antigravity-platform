@@ -47,65 +47,65 @@ export default function AccountPage() {
   };
 
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center bg-[#050505]">
-      <span className="w-10 h-10 border-4 border-white/20 border-t-purple-500 rounded-full animate-spin"></span>
+    return <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <span className="w-10 h-10 border-4 border-black/5 border-t-purple-600 rounded-full animate-spin"></span>
     </div>;
   }
 
   return (
-    <div className="min-h-screen bg-[#050505] p-4 md:p-12">
-      <div className="max-w-4xl mx-auto">
-        <div className="flex justify-between items-end mb-10 border-b border-white/10 pb-6">
+    <div className="min-h-screen bg-gray-50 p-6 md:p-16">
+      <div className="max-w-5xl mx-auto">
+        <div className="flex flex-col md:flex-row justify-between md:items-end mb-16 gap-6">
           <div>
-            <h1 className="text-3xl md:text-5xl font-black uppercase tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-cyan-400">
-              Commander Profile
+            <h1 className="text-4xl md:text-7xl font-black uppercase tracking-tighter text-black">
+              Profile
             </h1>
-            <p className="text-white/60 mt-2 text-lg">Welcome back, {user?.name}</p>
+            <p className="text-black/40 mt-4 text-xl font-medium tracking-tight">Welcome back, {user?.name}</p>
           </div>
           <button 
             onClick={handleLogout}
-            className="px-6 py-2 border border-red-500/30 text-red-400 hover:bg-red-500/10 rounded text-sm font-bold uppercase tracking-wider transition-colors"
+            className="px-8 py-3 bg-black text-white text-[10px] font-black uppercase tracking-widest rounded-2xl hover:bg-neutral-800 transition-all shadow-xl"
           >
-            Abort Mission (Logout)
+            Logout
           </button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
           {/* User Info Card */}
-          <div className="md:col-span-1">
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-6 backdrop-blur-md relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/10 rounded-full blur-2xl translate-x-1/2 -translate-y-1/2 pointer-events-none"></div>
+          <div className="lg:col-span-1">
+            <div className="bg-white border border-black/5 rounded-[2.5rem] p-8 shadow-sm relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/5 rounded-full blur-2xl translate-x-1/2 -translate-y-1/2 pointer-events-none"></div>
               
-              <h2 className="text-xl font-bold uppercase tracking-widest mb-6 border-b border-white/10 pb-4">Details</h2>
+              <h2 className="text-xs font-black uppercase tracking-[0.3em] mb-10 border-b border-black/5 pb-6 text-black">Details</h2>
               
-              <div className="space-y-4">
+              <div className="space-y-6">
                 <div>
-                  <p className="text-xs text-white/40 uppercase tracking-wider mb-1">Name</p>
-                  <p className="font-semibold">{user?.name}</p>
+                  <p className="text-[10px] text-black/30 font-black uppercase tracking-widest mb-2">Full Identity</p>
+                  <p className="font-bold text-black">{user?.name}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-white/40 uppercase tracking-wider mb-1">Email</p>
-                  <p className="font-semibold">{user?.email}</p>
+                  <p className="text-[10px] text-black/30 font-black uppercase tracking-widest mb-2">Email Address</p>
+                  <p className="font-bold text-black">{user?.email}</p>
                 </div>
                 {user?.phone && (
                   <div>
-                    <p className="text-xs text-white/40 uppercase tracking-wider mb-1">Phone</p>
-                    <p className="font-semibold">{user?.phone}</p>
+                    <p className="text-[10px] text-black/30 font-black uppercase tracking-widest mb-2">Contact</p>
+                    <p className="font-bold text-black">{user?.phone}</p>
                   </div>
                 )}
                 <div>
-                  <p className="text-xs text-white/40 uppercase tracking-wider mb-1">Clearance Level</p>
-                  <p className={`font-semibold uppercase text-xs inline-block px-2 py-1 rounded ${user?.role === 'admin' ? 'bg-purple-500/20 text-purple-300' : 'bg-cyan-500/20 text-cyan-300'}`}>
+                  <p className="text-[10px] text-black/30 font-black uppercase tracking-widest mb-2">Access Role</p>
+                  <p className={`font-black uppercase text-[10px] tracking-widest inline-block px-3 py-1 rounded-full ${user?.role === 'admin' ? 'bg-purple-50 text-purple-600' : 'bg-cyan-50 text-cyan-600'}`}>
                     {user?.role}
                   </p>
                 </div>
                 {user?.role === 'admin' && (
-                  <div className="pt-4 border-t border-white/10">
+                  <div className="pt-8 mt-4 border-t border-black/5">
                     <Link 
                       href="/admin" 
-                      className="w-full inline-block text-center py-3 bg-gradient-to-r from-purple-600 to-cyan-600 text-white font-black uppercase tracking-widest text-xs rounded-lg hover:opacity-90 shadow-[0_0_15px_rgba(168,85,247,0.3)] transition-all"
+                      className="w-full inline-block text-center py-4 bg-black text-white font-black uppercase tracking-widest text-[10px] rounded-2xl hover:bg-neutral-800 shadow-xl transition-all"
                     >
-                      Admin Dashboard
+                      Management Portal
                     </Link>
                   </div>
                 )}
@@ -114,37 +114,35 @@ export default function AccountPage() {
           </div>
 
           {/* Orders List */}
-          <div className="md:col-span-2">
-            <h2 className="text-2xl font-bold uppercase tracking-widest mb-6">Mission History (Orders)</h2>
+          <div className="lg:col-span-2">
+            <h2 className="text-xs font-black uppercase tracking-[0.3em] mb-10 text-black">Order History</h2>
             
             {orders.length === 0 ? (
-              <div className="bg-white/5 border border-white/10 border-dashed rounded-2xl p-12 text-center text-white/50">
-                <p className="mb-4">No deployments recorded yet.</p>
-                <Link href="/products" className="inline-block px-6 py-2 bg-white/10 hover:bg-white/20 text-white font-bold uppercase tracking-wider rounded text-sm transition-colors">
+              <div className="bg-white border-2 border-dashed border-black/5 rounded-[3rem] p-16 text-center shadow-sm">
+                <p className="mb-8 font-black uppercase tracking-widest text-black/20">No orders recorded yet.</p>
+                <Link href="/products" className="inline-block px-10 py-4 bg-black text-white font-black uppercase tracking-widest rounded-2xl text-[10px] hover:bg-neutral-800 transition-all shadow-xl">
                   Browse Collection
                 </Link>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-6">
                 {orders.map((order) => (
-                  <div key={order.id} className="bg-white/5 border border-white/10 rounded-xl p-6 hover:border-cyan-500/30 transition-colors">
-                    <div className="flex flex-col md:flex-row justify-between md:items-center gap-4 mb-4 pb-4 border-b border-white/5">
+                  <div key={order.id} className="bg-white border border-black/5 rounded-[2.5rem] p-8 hover:shadow-2xl transition-all group">
+                    <div className="flex flex-col md:flex-row justify-between md:items-center gap-6 mb-8 pb-8 border-b border-black/5">
                       <div>
-                        <p className="text-xs text-white/40 uppercase tracking-widest mb-1">Order ID</p>
-                        <p className="font-mono font-bold text-lg">#{order.id}</p>
+                        <p className="text-[10px] text-black/30 font-black uppercase tracking-widest mb-2">Reference</p>
+                        <p className="font-black text-xl text-black">#{order.id}</p>
                       </div>
                       <div>
-                        <p className="text-xs text-white/40 uppercase tracking-widest mb-1">Date</p>
-                        <p className="font-semibold">{new Date(order.created_at).toLocaleDateString()}</p>
+                        <p className="text-[10px] text-black/30 font-black uppercase tracking-widest mb-2">Placed On</p>
+                        <p className="font-bold text-black">{new Date(order.created_at).toLocaleDateString()}</p>
                       </div>
                       <div className="text-left md:text-right">
-                        <p className="text-xs text-white/40 uppercase tracking-widest mb-1">Status</p>
-                        <span className={`inline-block px-3 py-1 rounded text-xs font-bold uppercase tracking-widest border ${
-                          order.status === 'completed' ? 'bg-green-500/10 text-green-400 border-green-500/20' :
-                          order.status === 'pending' ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' :
-                          order.status === 'processing' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' :
-                          order.status === 'shipped' ? 'bg-purple-500/10 text-purple-400 border-purple-500/20' :
-                          'bg-white/5 text-white/40 border-white/10'
+                        <p className="text-[10px] text-black/30 font-black uppercase tracking-widest mb-2">Status</p>
+                        <span className={`inline-block px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] border ${
+                          order.status === 'completed' ? 'bg-green-50 text-green-600 border-green-100' :
+                          order.status === 'pending' ? 'bg-yellow-50 text-yellow-600 border-yellow-100' :
+                          'bg-gray-50 text-black/40 border-black/5'
                         }`}>
                           {order.status}
                         </span>
@@ -152,8 +150,8 @@ export default function AccountPage() {
                     </div>
                     
                     <div className="flex justify-between items-center">
-                      <p className="font-semibold text-white/60">Total Value:</p>
-                      <p className="text-xl font-black">₹{order.total_amount}</p>
+                      <p className="font-black text-xs uppercase tracking-widest text-black/40">Total Amount</p>
+                      <p className="text-3xl font-black text-black tracking-tighter">₹{order.total_amount.toLocaleString()}</p>
                     </div>
                   </div>
                 ))}
