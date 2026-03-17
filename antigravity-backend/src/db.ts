@@ -188,12 +188,12 @@ export async function initDb() {
   // Auto-seed categories
   if (isPostgres) {
     await dbWrapper.exec(`
-      INSERT INTO categories (name) VALUES ('Men'), ('PHANTS'), ('Accessories')
+      INSERT INTO categories (name) VALUES ('T-Shirt'), ('PHANTS'), ('Accessories')
       ON CONFLICT (name) DO NOTHING;
     `);
   } else {
     await dbWrapper.exec(`
-      INSERT OR IGNORE INTO categories (name) VALUES ('Men'), ('PHANTS'), ('Accessories');
+      INSERT OR IGNORE INTO categories (name) VALUES ('T-Shirt'), ('PHANTS'), ('Accessories');
     `);
   }
 
@@ -221,14 +221,16 @@ export async function initDb() {
   const productCount = await dbWrapper.get('SELECT COUNT(*) as count FROM products');
   if (parseInt(productCount.count) === 0) {
     const mockProducts = [
-      { name: 'Nebula Hoodie', description: 'Engineered for zero gravity.', price: 2999, category: 'Men', image_url: 'https://images.unsplash.com/photo-1556821840-3a63f95609a7?q=80&w=1587&auto=format&fit=crop', stock: 15, is_bestseller: 1 },
-      { name: 'Horizon Cargo', description: 'Premium cyber fit.', price: 3499, category: 'Men', image_url: 'https://images.unsplash.com/photo-1624378439575-d10c6d1774ac?q=80&w=1587&auto=format&fit=crop', stock: 20 },
-      { name: 'Lunar Crop Top', description: 'Night sky design.', price: 1299, category: 'PHANTS', image_url: 'https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?q=80&w=1740&auto=format&fit=crop', stock: 12, is_bestseller: 1 }
+      { name: 'Vortex Over-sized Tee', description: 'Heavyweight cotton with holographic print.', price: 1899, category: 'T-Shirt', image_url: 'https://images.unsplash.com/photo-1576566588028-4147f3842f27?q=80&w=1664&auto=format&fit=crop', stock: 50, is_bestseller: 1, sizes: 'S,M,L,XL' },
+      { name: 'Cyber Noir Boxy Tee', description: 'Matte black finish with minimalist embroidery.', price: 2199, category: 'T-Shirt', image_url: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?q=80&w=1760&auto=format&fit=crop', stock: 35, is_bestseller: 0, sizes: 'M,L,XL' },
+      { name: 'Stealth Phants V1', description: 'Water-resistant tech fabric with modular pockets.', price: 3999, category: 'PHANTS', image_url: 'https://images.unsplash.com/photo-1552902865-b72c031ac5ea?q=80&w=1587&auto=format&fit=crop', stock: 15, is_bestseller: 1, sizes: 'M,L,XL' },
+      { name: 'Gravity Cargo', description: 'Reinforced knees and magnetic closures.', price: 4499, category: 'PHANTS', image_url: 'https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?q=80&w=1587&auto=format&fit=crop', stock: 10, is_bestseller: 1, sizes: 'L,XL' },
+      { name: 'Nebula Hoodie', description: 'Engineered for zero gravity.', price: 2999, category: 'T-Shirt', image_url: 'https://images.unsplash.com/photo-1556821840-3a63f95609a7?q=80&w=1587&auto=format&fit=crop', stock: 15, is_bestseller: 1, sizes: 'S,M,L' }
     ];
     for (const p of mockProducts) {
       await dbWrapper.run(
-        'INSERT INTO products (name, description, price, category, image_url, stock, is_bestseller) VALUES (?, ?, ?, ?, ?, ?, ?)',
-        [p.name, p.description, p.price, p.category, p.image_url, p.stock, p.is_bestseller]
+        'INSERT INTO products (name, description, price, category, image_url, stock, is_bestseller, sizes) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+        [p.name, p.description, p.price, p.category, p.image_url, p.stock, p.is_bestseller, p.sizes]
       );
     }
     console.log('Seeded Initial Mock Products.');
