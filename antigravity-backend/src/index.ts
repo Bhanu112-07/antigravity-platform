@@ -1,3 +1,4 @@
+console.log('API Process starting...');
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
@@ -51,5 +52,6 @@ initDb().then(() => {
     console.log('Server connection closed');
   });
 }).catch(err => {
-  console.error('Failed to initialize database', err);
+  console.error('CRITICAL: Failed to initialize database:', err);
+  process.exit(1);
 });

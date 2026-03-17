@@ -21,7 +21,12 @@ if (databaseUrl) {
   console.log('Using PostgreSQL database');
 } else {
   const dbPath = process.env.DATABASE_PATH || path.join(process.cwd(), 'database.sqlite');
-  sqliteDb = new sqlite3.Database(dbPath);
+  sqliteDb = new sqlite3.Database(dbPath, (err) => {
+    if (err) {
+      console.error('CRITICAL: SQLite connection error:', err);
+      process.exit(1);
+    }
+  });
   console.log(`Using SQLite database at ${dbPath}`);
 }
 
@@ -111,7 +116,7 @@ export async function initDb() {
       password TEXT,
       phone TEXT,
       role TEXT DEFAULT 'user',
-      created_at TIMESTAMP DEFAULT ${isPostgres ? 'CURRENT_TIMESTAMP' : 'CURRENT_TIMESTAMP'}
+      created_at TIMESTAMP DEFAULT ${timestampDefault}
     );
 
     CREATE TABLE IF NOT EXISTS products (
@@ -127,7 +132,7 @@ export async function initDb() {
       image_urls TEXT,
       video_url TEXT,
       is_bestseller INTEGER DEFAULT 0,
-      created_at TIMESTAMP DEFAULT ${isPostgres ? 'CURRENT_TIMESTAMP' : 'CURRENT_TIMESTAMP'}
+      created_at TIMESTAMP DEFAULT ${timestampDefault}
     );
 
     CREATE TABLE IF NOT EXISTS orders (
@@ -145,14 +150,14 @@ export async function initDb() {
       payment_method TEXT,
       shiprocket_order_id TEXT,
       shiprocket_shipment_id TEXT,
-      created_at TIMESTAMP DEFAULT ${isPostgres ? 'CURRENT_TIMESTAMP' : 'CURRENT_TIMESTAMP'}
+      created_at TIMESTAMP DEFAULT ${timestampDefault}
     );
 
     CREATE TABLE IF NOT EXISTS categories (
       id ${idType},
       name TEXT UNIQUE NOT NULL,
       description TEXT,
-      created_at TIMESTAMP DEFAULT ${isPostgres ? 'CURRENT_TIMESTAMP' : 'CURRENT_TIMESTAMP'}
+      created_at TIMESTAMP DEFAULT ${timestampDefault}
     );
 
     CREATE TABLE IF NOT EXISTS reviews (
