@@ -81,8 +81,8 @@ export const dbWrapper = {
     if (pool) {
       let count = 1;
       let pgSql = sql.replace(/\?/g, () => `$${count++}`);
-      if (pgSql.trim().toUpperCase().startsWith('INSERT')) {
-        pgSql += ' RETURNING id';
+      if (pgSql.trim().toUpperCase().startsWith('INSERT') && !pgSql.toUpperCase().includes('RETURNING')) {
+        pgSql += ' RETURNING *';
       }
       const res = await pool.query(pgSql, params);
       return { lastID: (res.rows[0] as any)?.id || null };
