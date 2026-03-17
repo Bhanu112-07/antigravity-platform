@@ -1,5 +1,4 @@
 import { Pool } from 'pg';
-import sqlite3 from 'sqlite3';
 import dotenv from 'dotenv';
 import bcrypt from 'bcryptjs';
 import path from 'path';
@@ -7,7 +6,7 @@ import path from 'path';
 dotenv.config();
 
 let pool: Pool | null = null;
-let sqliteDb: sqlite3.Database | null = null;
+let sqliteDb: any | null = null;
 
 const databaseUrl = process.env.DATABASE_URL;
 
@@ -21,21 +20,28 @@ if (databaseUrl) {
   console.log('Using PostgreSQL database');
 } else {
   const dbPath = process.env.DATABASE_PATH || path.join(process.cwd(), 'database.sqlite');
-  sqliteDb = new sqlite3.Database(dbPath, (err) => {
-    if (err) {
-      console.error('CRITICAL: SQLite connection error:', err);
-      process.exit(1);
-    }
-  });
-  console.log(`Using SQLite database at ${dbPath}`);
-  
-  // Try to write to the file to check permissions
+  console.log(`Initializing SQLite at ${dbPath}...`);
   try {
-    const fs = require('fs');
-    fs.appendFileSync(dbPath, '');
-    console.log('Database path is writable.');
+    const sqlite3 = require('sqlite3');
+    sqliteDb = new sqlite3.Database(dbPath, (err: any) => {
+      if (err) {
+        console.error('CRITICAL: SQLite connection error:', err);
+        process.exit(1);
+      }
+    });
+    console.log(`Using SQLite database at ${dbPath}`);
+    
+    // Try to write to the file to check permissions
+    try {
+      const fs = require('fs');
+      fs.appendFileSync(dbPath, '');
+      console.log('Database path is writable.');
+    } catch (err) {
+      console.error('WARNING: Database path might not be writable:', err);
+    }
   } catch (err) {
-    console.error('WARNING: Database path might not be writable:', err);
+    console.error('CRITICAL: Failed to load sqlite3 module. Missing native bindings?', err);
+    process.exit(1);
   }
 }
 
@@ -49,7 +55,7 @@ export const dbWrapper = {
       return res.rows[0];
     } else {
       return new Promise((resolve, reject) => {
-        sqliteDb!.get(sql, params, (err, row) => {
+        sqliteDb!.get(sql, params, (err: any, row: any) => {
           if (err) reject(err);
           else resolve(row);
         });
@@ -64,7 +70,7 @@ export const dbWrapper = {
       return res.rows;
     } else {
       return new Promise((resolve, reject) => {
-        sqliteDb!.all(sql, params, (err, rows) => {
+        sqliteDb!.all(sql, params, (err: any, rows: any[]) => {
           if (err) reject(err);
           else resolve(rows);
         });
@@ -82,7 +88,7 @@ export const dbWrapper = {
       return { lastID: (res.rows[0] as any)?.id || null };
     } else {
       return new Promise((resolve, reject) => {
-        sqliteDb!.run(sql, params, function(err) {
+        sqliteDb!.run(sql, params, function(this: any, err: any) {
           if (err) {
             reject(err);
           } else {
@@ -97,7 +103,7 @@ export const dbWrapper = {
       return pool.query(sql);
     } else {
       return new Promise((resolve, reject) => {
-        sqliteDb!.exec(sql, (err) => {
+        sqliteDb!.exec(sql, (err: any) => {
           if (err) reject(err);
           else resolve(null);
         });
