@@ -1,4 +1,15 @@
-console.log('API Process starting...');
+console.log('--- STARTUP SEQUENCE INITIATED ---');
+
+process.on('uncaughtException', (err) => {
+  console.error('CRITICAL UNCAUGHT EXCEPTION:', err);
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('CRITICAL UNHANDLED REJECTION at:', promise, 'reason:', reason);
+  process.exit(1);
+});
+
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
@@ -41,17 +52,17 @@ app.get('/api/health', (req, res) => {
 });
 
 console.log('Attempting to initialize database...');
-initDb().then(() => {
-  const server = app.listen(port, () => {
-    console.log(`Server fully operational on port ${port}`);
-  });
-  server.on('error', (err) => {
-    console.error('Server failed to start or encountered an error:', err);
-  });
-  server.on('close', () => {
-    console.log('Server connection closed');
-  });
-}).catch(err => {
-  console.error('CRITICAL: Failed to initialize database:', err);
-  process.exit(1);
-});
+async function startServer() {
+  try {
+    await initDb();
+    console.log('Database init successful.');
+    const server = app.listen(port, () => {
+      console.log(`Server fully operational on port ${port}`);
+    });
+  } catch (err) {
+    console.error('CRITICAL STARTUP FAILURE:', err);
+    process.exit(1);
+  }
+}
+
+startServer();

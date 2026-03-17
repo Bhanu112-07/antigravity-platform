@@ -28,6 +28,15 @@ if (databaseUrl) {
     }
   });
   console.log(`Using SQLite database at ${dbPath}`);
+  
+  // Try to write to the file to check permissions
+  try {
+    const fs = require('fs');
+    fs.appendFileSync(dbPath, '');
+    console.log('Database path is writable.');
+  } catch (err) {
+    console.error('WARNING: Database path might not be writable:', err);
+  }
 }
 
 // Compatibility layer for a unified promise-based API
@@ -168,7 +177,7 @@ export async function initDb() {
       rating INTEGER NOT NULL,
       comment TEXT,
       user_name TEXT,
-      created_at TIMESTAMP DEFAULT ${isPostgres ? 'CURRENT_TIMESTAMP' : 'CURRENT_TIMESTAMP'}
+      created_at TIMESTAMP DEFAULT ${timestampDefault}
     );
 
     CREATE TABLE IF NOT EXISTS site_configs (
