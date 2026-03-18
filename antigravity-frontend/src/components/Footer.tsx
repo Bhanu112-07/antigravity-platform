@@ -38,13 +38,15 @@ export default function Footer() {
         </div>
 
         <div>
-          <h4 className="text-black font-black mb-6 text-sm tracking-[0.2em] uppercase">Newsletter</h4>
-          <p className="text-sm mb-6 font-medium">Join our movement. Access exclusive drops and updates before anyone else.</p>
-          <div className="flex">
-            <input type="email" placeholder="Email Address" className="bg-black/5 border border-black/10 text-black text-sm rounded-l-2xl px-5 py-3 w-full focus:outline-none focus:border-black transition-colors" />
-            <button className="bg-black text-white font-black text-[10px] tracking-widest px-8 py-3 rounded-r-2xl hover:bg-neutral-800 transition-colors">
-              JOIN
-            </button>
+          <h2 className="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-600 to-purple-600 uppercase tracking-tighter mb-4">
+            Designed By Bhanu
+          </h2>
+          <p className="text-sm italic leading-relaxed mb-4 font-medium text-black/50">
+            "Innovation is the bridge between imagination and reality."
+          </p>
+          <div className="pt-4 border-t border-black/5">
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-black/30">Developer Portfolio</p>
+            <p className="text-sm font-bold mt-1 tracking-tight">Full Stack Architecture & Design</p>
           </div>
         </div>
 
