@@ -23,6 +23,7 @@ import ordersRoutes from './routes/orders';
 import adminRoutes from './routes/admin';
 import reviewsRoutes from './routes/reviews';
 import siteRoutes from './routes/site';
+import paymentRoutes from './routes/payment';
 
 dotenv.config();
 
@@ -38,6 +39,7 @@ app.use('/api/orders', ordersRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/reviews', reviewsRoutes);
 app.use('/api/site', siteRoutes);
+app.use('/api/payment', paymentRoutes);
 const uploadsDir = process.env.UPLOAD_DIR 
   ? path.resolve(process.env.UPLOAD_DIR) 
   : path.join(process.cwd(), 'uploads');

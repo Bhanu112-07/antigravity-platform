@@ -86,7 +86,6 @@ export default function CheckoutPage() {
       return;
     }
 
-    // Indian number specific validation: first digit after +91 must be 6-9
     if (formData.countryCode === '+91' && !/^[6-9]/.test(formData.phone)) {
       alert('Indian mobile numbers must start with 6, 7, 8, or 9');
       setStep(1);
@@ -94,6 +93,85 @@ export default function CheckoutPage() {
     }
 
     setLoading(true);
+
+    try {
+      // If payment is not COD, initiate Razorpay
+      if (formData.paymentMethod !== 'COD') {
+        const orderRes = await fetch(`${API_BASE_URL}/api/payment/create-order`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            amount: orderTotal,
+            currency: 'INR',
+            receipt: `rcpt_${Date.now()}`
+          })
+        });
+
+        if (!orderRes.ok) throw new Error('Failed to initiate payment');
+        const razorpayOrder = await orderRes.json();
+
+        const options = {
+          key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_test_YOUR_KEY', // Should use env var
+          amount: razorpayOrder.amount,
+          currency: razorpayOrder.currency,
+          name: "Rarewingz",
+          description: "Premium Fashion Order",
+          order_id: razorpayOrder.id,
+          handler: async function (response: any) {
+            // Verify Payment
+            const verifyRes = await fetch(`${API_BASE_URL}/api/payment/verify-payment`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+              },
+              body: JSON.stringify({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature
+              })
+            });
+
+            const verifyData = await verifyRes.json();
+            if (verifyData.verified) {
+              await executeFinalOrderCreation(token, response.razorpay_payment_id);
+            } else {
+              alert('Payment verification failed');
+              setLoading(false);
+            }
+          },
+          prefill: {
+            name: `${formData.firstName} ${formData.lastName}`,
+            email: formData.email,
+            contact: formData.countryCode + formData.phone
+          },
+          theme: {
+            color: "#6366f1"
+          },
+          modal: {
+            ondismiss: function() {
+              setLoading(false);
+            }
+          }
+        };
+
+        const rzp = new (window as any).Razorpay(options);
+        rzp.open();
+      } else {
+        // Direct COD Order
+        await executeFinalOrderCreation(token);
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error initiating checkout. Please try again.');
+      setLoading(false);
+    }
+  };
+
+  const executeFinalOrderCreation = async (token: string, paymentId: string = 'COD') => {
     try {
       const response = await fetch(`${API_BASE_URL}/api/orders`, {
         method: 'POST',
@@ -110,7 +188,8 @@ export default function CheckoutPage() {
           shipping_address: formData.address,
           city: formData.city,
           pin_code: formData.pinCode,
-          payment_method: formData.paymentMethod
+          payment_method: formData.paymentMethod,
+          payment_id: paymentId
         })
       });
 
@@ -125,7 +204,7 @@ export default function CheckoutPage() {
       }
     } catch (err) {
       console.error(err);
-      alert('Network error. Please try again.');
+      alert('Network error while saving order.');
     } finally {
       setLoading(false);
     }
