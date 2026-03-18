@@ -1,23 +1,9 @@
 import express from 'express';
-import multer from 'multer';
-import path from 'path';
 import { getDb } from '../db';
 import { authenticateAdmin } from '../middleware/auth';
+import { productUpload } from '../middleware/upload';
 
 const router = express.Router();
-
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const uploadPath = process.env.UPLOAD_DIR || 'uploads/';
-    cb(null, uploadPath);
-  },
-  filename: (req, file, cb) => cb(null, Date.now() + path.extname(file.originalname))
-});
-const upload = multer({ storage });
-const productUpload = upload.fields([
-  { name: 'images', maxCount: 5 },
-  { name: 'video', maxCount: 1 }
-]);
 
 // Get all products (Public)
 router.get('/', async (req, res) => {
@@ -80,13 +66,13 @@ router.post('/', authenticateAdmin, productUpload, async (req, res) => {
     const files = req.files as { [fieldname: string]: Express.Multer.File[] };
     if (files && files['images']) {
       files['images'].forEach((f: any) => {
-        imageUrls.push(`/uploads/${f.filename}`);
+        imageUrls.push(f.path);
       });
     }
 
     let final_video_url = video_url || '';
     if (files && files['video'] && files['video'].length > 0) {
-      final_video_url = `/uploads/${files['video'][0].filename}`;
+      final_video_url = files['video'][0].path;
     }
 
     // Fallback logic for single initial image for backward compatibility
@@ -132,13 +118,13 @@ router.put('/:id', authenticateAdmin, productUpload, async (req, res) => {
     const files = req.files as { [fieldname: string]: Express.Multer.File[] };
     if (files && files['images']) {
       files['images'].forEach((f: any) => {
-        imageUrls.push(`/uploads/${f.filename}`);
+        imageUrls.push(f.path);
       });
     }
 
     let final_video_url = video_url || '';
     if (files && files['video'] && files['video'].length > 0) {
-      final_video_url = `/uploads/${files['video'][0].filename}`;
+      final_video_url = files['video'][0].path;
     }
 
     let primary_image_url = imageUrls.length > 0 ? imageUrls[0] : req.body.image_url;

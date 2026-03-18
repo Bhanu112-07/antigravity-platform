@@ -1,19 +1,9 @@
 import express from 'express';
 import { getDb } from '../db';
 import { authenticateAdmin } from '../middleware/auth';
-import multer from 'multer';
-import path from 'path';
+import { upload } from '../middleware/upload';
 
 const router = express.Router();
-
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const uploadPath = process.env.UPLOAD_DIR || 'uploads/';
-    cb(null, uploadPath);
-  },
-  filename: (req, file, cb) => cb(null, 'fab_' + Date.now() + path.extname(file.originalname))
-});
-const upload = multer({ storage });
 
 // Get FAB section config (Public)
 router.get('/fab', async (req, res) => {
@@ -35,7 +25,7 @@ router.post('/fab', authenticateAdmin, upload.single('video'), async (req, res) 
     
     let video_url = existing_video_url || '';
     if (req.file) {
-      video_url = `/uploads/${req.file.filename}`;
+      video_url = req.file.path;
     }
 
     const value = JSON.stringify({
@@ -69,7 +59,7 @@ router.post('/fab/sqlite', authenticateAdmin, upload.single('video'), async (req
       
       let video_url = existing_video_url || '';
       if (req.file) {
-        video_url = `/uploads/${req.file.filename}`;
+        video_url = req.file.path;
       }
   
       const value = JSON.stringify({

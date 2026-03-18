@@ -3,6 +3,9 @@ import path from "path";
 
 const nextConfig: NextConfig = {
   outputFileTracingRoot: path.join(__dirname, "../"),
+  images: {
+    domains: ['res.cloudinary.com', 'localhost'], // Adding backend localhost and cloudinary
+  },
 };
 
 export default nextConfig;
