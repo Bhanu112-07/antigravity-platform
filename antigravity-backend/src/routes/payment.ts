@@ -8,10 +8,19 @@ dotenv.config();
 
 const router = express.Router();
 
-const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID || '',
-  key_secret: process.env.RAZORPAY_KEY_SECRET || '',
-});
+const getRazorpay = () => {
+  const key_id = process.env.RAZORPAY_KEY_ID;
+  const key_secret = process.env.RAZORPAY_KEY_SECRET;
+
+  if (!key_id || !key_secret) {
+    throw new Error('RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET must be configured');
+  }
+
+  return new Razorpay({
+    key_id,
+    key_secret,
+  });
+};
 
 // Create Razorpay Order
 router.post('/create-order', authenticate, async (req: AuthRequest, res) => {
@@ -22,17 +31,18 @@ router.post('/create-order', authenticate, async (req: AuthRequest, res) => {
       return res.status(400).json({ error: 'Amount is required' });
     }
 
+    const rzp = getRazorpay();
     const options = {
       amount: Math.round(amount * 100), // Razorpay expects amount in paise
       currency,
       receipt,
     };
 
-    const order = await razorpay.orders.create(options);
+    const order = await rzp.orders.create(options);
     res.status(200).json(order);
-  } catch (err) {
+  } catch (err: any) {
     console.error('Razorpay Order Creation Error:', err);
-    res.status(500).json({ error: 'Error creating Razorpay order' });
+    res.status(500).json({ error: err.message || 'Error creating Razorpay order' });
   }
 });
 
