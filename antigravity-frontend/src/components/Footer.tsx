@@ -40,7 +40,7 @@ export default function Footer() {
         <div className="flex flex-col items-start">
           <div className="mb-4 group cursor-default">
             <span className="block text-4xl text-black leading-none" style={{ fontFamily: 'var(--font-logo)' }}>Designed By</span>
-            <span className="block text-xl font-black uppercase tracking-[0.5em] text-transparent bg-clip-text bg-gradient-to-r from-gray-900 to-gray-500 -mt-1 ml-1 group-hover:from-purple-600 group-hover:to-cyan-600 transition-all duration-500">BHANU</span>
+            <span className="block text-xl uppercase tracking-[0.5em] text-transparent bg-clip-text bg-gradient-to-r from-gray-900 to-gray-500 -mt-2 ml-1 group-hover:from-purple-600 group-hover:to-cyan-600 transition-all duration-500" style={{ fontFamily: 'var(--font-brand)' }}>BHANU</span>
           </div>
           <p className="text-xs italic leading-relaxed mb-6 font-medium text-black/40">
             "Innovation is the bridge between imagination and reality."
