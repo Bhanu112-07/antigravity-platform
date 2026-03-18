@@ -13,9 +13,11 @@ function ProductsContent() {
 
   useEffect(() => {
     // Fetch from backend
-    const endpoint = categoryParam 
-      ? `${API_BASE_URL}/api/products?category=${categoryParam}`
-      : `${API_BASE_URL}/api/products`;
+    const searchParam = searchParams.get('search');
+    
+    let endpoint = `${API_BASE_URL}/api/products?`;
+    if (categoryParam) endpoint += `category=${categoryParam}&`;
+    if (searchParam) endpoint += `search=${searchParam}`;
       
     fetch(endpoint)
       .then(res => res.json())
@@ -27,7 +29,7 @@ function ProductsContent() {
         console.error(err);
         setLoading(false);
       });
-  }, [categoryParam]);
+  }, [categoryParam, searchParams]);
 
   return (
     <div className="container mx-auto px-4 py-16 min-h-screen bg-white">
