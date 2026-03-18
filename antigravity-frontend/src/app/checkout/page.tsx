@@ -133,10 +133,10 @@ export default function CheckoutPage() {
 
   if (cart.length === 0) {
     return (
-      <div className="min-h-screen bg-[#050505] flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <div className="text-center">
-          <h1 className="text-4xl font-black uppercase mb-6">Your cart is empty</h1>
-          <Link href="/products" className="bg-white text-black px-8 py-3 rounded-full font-bold uppercase tracking-widest hover:bg-gray-200 transition-all">
+          <h1 className="text-4xl font-black uppercase mb-6 text-black">Your cart is empty</h1>
+          <Link href="/products" className="bg-black text-white px-8 py-3 rounded-full font-bold uppercase tracking-widest hover:bg-gray-800 transition-all shadow-md">
             Start Shopping
           </Link>
         </div>
@@ -145,57 +145,57 @@ export default function CheckoutPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#050505]">
+    <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-12 max-w-6xl">
-        <h1 className="text-4xl font-black uppercase tracking-tighter mb-10 text-center text-transparent bg-clip-text bg-gradient-to-r from-white to-white/50">Checkout</h1>
+        <h1 className="text-4xl font-black uppercase tracking-tighter mb-10 text-center text-transparent bg-clip-text bg-gradient-to-r from-gray-900 to-gray-600">Checkout</h1>
         
         <div className="flex flex-col lg:flex-row gap-12">
           {/* Left Column - Steps */}
           <div className="flex-grow">
             {/* Step Indicators */}
             <div className="flex justify-between mb-8 relative">
-              <div className="absolute top-1/2 left-0 w-full h-0.5 bg-white/10 -translate-y-1/2 z-0"></div>
-              <div className="absolute top-1/2 left-0 h-0.5 bg-purple-500 transition-all duration-500 z-0" style={{ width: step === 1 ? '0%' : step === 2 ? '50%' : '100%' }}></div>
+              <div className="absolute top-1/2 left-0 w-full h-0.5 bg-gray-200 -translate-y-1/2 z-0"></div>
+              <div className="absolute top-1/2 left-0 h-0.5 bg-purple-600 transition-all duration-500 z-0" style={{ width: step === 1 ? '0%' : step === 2 ? '50%' : '100%' }}></div>
               
-              <div className={`relative z-10 font-bold flex flex-col items-center gap-2 ${step >= 1 ? 'text-purple-400' : 'text-white/30'}`}>
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 ${step >= 1 ? 'border-purple-500 bg-black' : 'border-white/10 bg-black'}`}>1</div>
+              <div className={`relative z-10 font-bold flex flex-col items-center gap-2 ${step >= 1 ? 'text-purple-600' : 'text-gray-400'}`}>
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 ${step >= 1 ? 'border-purple-600 bg-white' : 'border-gray-200 bg-white'}`}>1</div>
                 <span className="text-xs uppercase tracking-widest hidden sm:block">Details</span>
               </div>
-              <div className={`relative z-10 font-bold flex flex-col items-center gap-2 ${step >= 2 ? 'text-purple-400' : 'text-white/30'}`}>
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 ${step >= 2 ? 'border-purple-500 bg-black' : 'border-white/10 bg-black'}`}>2</div>
+              <div className={`relative z-10 font-bold flex flex-col items-center gap-2 ${step >= 2 ? 'text-purple-600' : 'text-gray-400'}`}>
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 ${step >= 2 ? 'border-purple-600 bg-white' : 'border-gray-200 bg-white'}`}>2</div>
                 <span className="text-xs uppercase tracking-widest hidden sm:block">Shipping</span>
               </div>
-              <div className={`relative z-10 font-bold flex flex-col items-center gap-2 ${step >= 3 ? 'text-purple-400' : 'text-white/30'}`}>
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 ${step >= 3 ? 'border-purple-500 bg-black' : 'border-white/10 bg-black'}`}>3</div>
+              <div className={`relative z-10 font-bold flex flex-col items-center gap-2 ${step >= 3 ? 'text-purple-600' : 'text-gray-400'}`}>
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 ${step >= 3 ? 'border-purple-600 bg-white' : 'border-gray-200 bg-white'}`}>3</div>
                 <span className="text-xs uppercase tracking-widest hidden sm:block">Payment</span>
               </div>
             </div>
 
             {/* Forms based on step */}
-            <div className="bg-white/5 border border-white/10 p-6 md:p-8 rounded-2xl backdrop-blur-sm">
+            <div className="bg-white border border-gray-100 p-6 md:p-8 rounded-2xl shadow-sm">
               {step === 1 && (
-                <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 text-black">
                   <h2 className="text-xl font-bold uppercase tracking-wide mb-6">Contact Information</h2>
                   <div>
-                    <label className="block text-sm text-white/60 mb-2">Email Address</label>
+                    <label className="block text-sm text-gray-600 mb-2">Email Address</label>
                     <input 
                       type="email" 
                       name="email"
                       value={formData.email}
                       onChange={handleInputChange}
-                      className={`w-full bg-black/50 border ${errors.email ? 'border-red-500' : 'border-white/10'} rounded-lg p-3 focus:border-purple-500 focus:ring-1 focus:ring-purple-500 outline-none transition-all`} 
+                      className={`w-full bg-white border ${errors.email ? 'border-red-500' : 'border-gray-300'} rounded-lg p-3 text-black focus:border-purple-500 focus:ring-1 focus:ring-purple-500 outline-none transition-all`} 
                       placeholder="you@example.com" 
                     />
                     {errors.email && <p className="text-red-500 text-xs mt-1 font-bold">{errors.email}</p>}
                   </div>
                   <div>
-                    <label className="block text-sm text-white/60 mb-2">Phone Number</label>
+                    <label className="block text-sm text-gray-600 mb-2">Phone Number</label>
                     <div className="flex gap-2">
                       <select 
                         name="countryCode"
                         value={formData.countryCode}
                         onChange={handleInputChange}
-                        className="bg-black/50 border border-white/10 text-white rounded-lg p-3 focus:border-purple-500 outline-none transition-all w-32"
+                        className="bg-white border border-gray-300 text-black rounded-lg p-3 focus:border-purple-500 outline-none transition-all w-32"
                       >
                         {COUNTRY_CODES.map(c => (
                           <option key={c.code} value={c.code}>{c.code} ({c.name})</option>
@@ -208,7 +208,7 @@ export default function CheckoutPage() {
                         onChange={handleInputChange}
                         required
                         placeholder="0000000000"
-                        className={`flex-grow bg-black/50 border ${errors.phone ? 'border-red-500' : 'border-white/10'} rounded-lg p-3 focus:border-purple-500 focus:ring-1 focus:ring-purple-500 outline-none transition-all`} 
+                        className={`flex-grow bg-white border ${errors.phone ? 'border-red-500' : 'border-gray-300'} text-black rounded-lg p-3 focus:border-purple-500 focus:ring-1 focus:ring-purple-500 outline-none transition-all`} 
                       />
                     </div>
                     {errors.phone && <p className="text-red-500 text-xs mt-1 font-bold">{errors.phone}</p>}
@@ -236,7 +236,7 @@ export default function CheckoutPage() {
                       
                       setStep(2);
                     }} 
-                    className="w-full mt-6 bg-white text-black font-black uppercase tracking-widest py-4 rounded-lg hover:bg-gray-200 transition-colors shadow-[0_0_20px_rgba(255,255,255,0.2)]"
+                    className="w-full mt-6 bg-black text-white font-black uppercase tracking-widest py-4 rounded-lg hover:bg-gray-800 transition-colors shadow-md"
                   >
                     Continue to Shipping
                   </button>
@@ -244,67 +244,67 @@ export default function CheckoutPage() {
               )}
 
               {step === 2 && (
-                <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 text-black">
                   <h2 className="text-xl font-bold uppercase tracking-wide mb-6">Shipping Address</h2>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm text-white/60 mb-2">First Name</label>
+                      <label className="block text-sm text-gray-600 mb-2">First Name</label>
                       <input 
                         type="text" 
                         name="firstName"
                         value={formData.firstName}
                         onChange={handleInputChange}
-                        className="w-full bg-black/50 border border-white/10 rounded-lg p-3 focus:border-purple-500 outline-none transition-all" 
+                        className="w-full bg-white border border-gray-300 text-black rounded-lg p-3 focus:border-purple-500 outline-none transition-all" 
                       />
                     </div>
                     <div>
-                      <label className="block text-sm text-white/60 mb-2">Last Name</label>
+                      <label className="block text-sm text-gray-600 mb-2">Last Name</label>
                       <input 
                         type="text" 
                         name="lastName"
                         value={formData.lastName}
                         onChange={handleInputChange}
-                        className="w-full bg-black/50 border border-white/10 rounded-lg p-3 focus:border-purple-500 outline-none transition-all" 
+                        className="w-full bg-white border border-gray-300 text-black rounded-lg p-3 focus:border-purple-500 outline-none transition-all" 
                       />
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm text-white/60 mb-2">Address</label>
+                    <label className="block text-sm text-gray-600 mb-2">Address</label>
                     <input 
                       type="text" 
                       name="address"
                       value={formData.address}
                       onChange={handleInputChange}
-                      className="w-full bg-black/50 border border-white/10 rounded-lg p-3 focus:border-purple-500 outline-none transition-all" 
+                      className="w-full bg-white border border-gray-300 text-black rounded-lg p-3 focus:border-purple-500 outline-none transition-all" 
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm text-white/60 mb-2">City</label>
+                      <label className="block text-sm text-gray-600 mb-2">City</label>
                       <input 
                         type="text" 
                         name="city"
                         value={formData.city}
                         onChange={handleInputChange}
-                        className="w-full bg-black/50 border border-white/10 rounded-lg p-3 focus:border-purple-500 outline-none transition-all" 
+                        className="w-full bg-white border border-gray-300 text-black rounded-lg p-3 focus:border-purple-500 outline-none transition-all" 
                       />
                     </div>
                     <div>
-                      <label className="block text-sm text-white/60 mb-2">PIN Code</label>
+                      <label className="block text-sm text-gray-600 mb-2">PIN Code</label>
                       <input 
                         type="text" 
                         name="pinCode"
                         value={formData.pinCode}
                         onChange={handleInputChange}
-                        className="w-full bg-black/50 border border-white/10 rounded-lg p-3 focus:border-purple-500 outline-none transition-all" 
+                        className="w-full bg-white border border-gray-300 text-black rounded-lg p-3 focus:border-purple-500 outline-none transition-all" 
                       />
                     </div>
                   </div>
                   <div className="flex gap-4 mt-8">
-                    <button onClick={() => setStep(1)} className="w-1/3 py-4 border border-white/20 text-white font-bold uppercase tracking-widest rounded-lg hover:bg-white/5 transition-colors">
+                    <button onClick={() => setStep(1)} className="w-1/3 py-4 border border-gray-300 text-gray-700 font-bold uppercase tracking-widest rounded-lg hover:bg-gray-50 transition-colors">
                       Back
                     </button>
-                    <button onClick={() => setStep(3)} className="w-2/3 bg-white text-black font-black uppercase tracking-widest py-4 rounded-lg hover:bg-gray-200 transition-colors shadow-[0_0_20px_rgba(255,255,255,0.2)]">
+                    <button onClick={() => setStep(3)} className="w-2/3 bg-black text-white font-black uppercase tracking-widest py-4 rounded-lg hover:bg-gray-800 transition-colors shadow-md">
                       Continue to Payment
                     </button>
                   </div>
@@ -312,53 +312,53 @@ export default function CheckoutPage() {
               )}
 
               {step === 3 && (
-                <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 text-black">
                   <h2 className="text-xl font-bold uppercase tracking-wide mb-6">Payment Method</h2>
                   
                   <div className="space-y-4">
-                    <label className={`flex items-center gap-4 p-4 border rounded-lg cursor-pointer transition-all ${formData.paymentMethod === 'UPI' ? 'border-purple-500 bg-purple-500/10' : 'border-white/10 bg-black/50'}`}>
+                    <label className={`flex items-center gap-4 p-4 border rounded-lg cursor-pointer transition-all ${formData.paymentMethod === 'UPI' ? 'border-purple-500 bg-purple-50' : 'border-gray-200 bg-white hover:border-gray-300'}`}>
                       <input 
                         type="radio" 
                         name="paymentMethod" 
                         value="UPI"
                         checked={formData.paymentMethod === 'UPI'}
                         onChange={handleInputChange}
-                        className="w-5 h-5 accent-purple-500" 
+                        className="w-5 h-5 accent-purple-600" 
                       />
-                      <span className="font-bold">UPI (GPay, PhonePe, Paytm)</span>
+                      <span className="font-bold text-gray-800">UPI (GPay, PhonePe, Paytm)</span>
                     </label>
-                    <label className={`flex items-center gap-4 p-4 border rounded-lg cursor-pointer transition-all ${formData.paymentMethod === 'CARD' ? 'border-purple-500 bg-purple-500/10' : 'border-white/10 bg-black/50'}`}>
+                    <label className={`flex items-center gap-4 p-4 border rounded-lg cursor-pointer transition-all ${formData.paymentMethod === 'CARD' ? 'border-purple-500 bg-purple-50' : 'border-gray-200 bg-white hover:border-gray-300'}`}>
                       <input 
                         type="radio" 
                         name="paymentMethod" 
                         value="CARD"
                         checked={formData.paymentMethod === 'CARD'}
                         onChange={handleInputChange}
-                        className="w-5 h-5 accent-purple-500" 
+                        className="w-5 h-5 accent-purple-600" 
                       />
-                      <span className="font-bold">Credit / Debit Card</span>
+                      <span className="font-bold text-gray-800">Credit / Debit Card</span>
                     </label>
-                    <label className={`flex items-center gap-4 p-4 border rounded-lg cursor-pointer transition-all ${formData.paymentMethod === 'COD' ? 'border-purple-500 bg-purple-500/10' : 'border-white/10 bg-black/50'}`}>
+                    <label className={`flex items-center gap-4 p-4 border rounded-lg cursor-pointer transition-all ${formData.paymentMethod === 'COD' ? 'border-purple-500 bg-purple-50' : 'border-gray-200 bg-white hover:border-gray-300'}`}>
                       <input 
                         type="radio" 
                         name="paymentMethod" 
                         value="COD"
                         checked={formData.paymentMethod === 'COD'}
                         onChange={handleInputChange}
-                        className="w-5 h-5 accent-purple-500" 
+                        className="w-5 h-5 accent-purple-600" 
                       />
-                      <span className="font-bold">Cash on Delivery</span>
+                      <span className="font-bold text-gray-800">Cash on Delivery</span>
                     </label>
                   </div>
                   
                   <div className="flex gap-4 mt-8">
-                    <button onClick={() => setStep(2)} className="w-1/3 py-4 border border-white/20 text-white font-bold uppercase tracking-widest rounded-lg hover:bg-white/5 transition-colors">
+                    <button onClick={() => setStep(2)} className="w-1/3 py-4 border border-gray-300 text-gray-700 font-bold uppercase tracking-widest rounded-lg hover:bg-gray-50 transition-colors">
                       Back
                     </button>
                     <button 
                       onClick={handlePlaceOrder} 
                       disabled={loading}
-                      className="w-2/3 bg-gradient-to-r from-purple-600 to-cyan-600 text-white font-black uppercase tracking-widest py-4 rounded-lg hover:opacity-90 shadow-[0_0_20px_rgba(168,85,247,0.4)] transition-all disabled:opacity-50"
+                      className="w-2/3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-black uppercase tracking-widest py-4 rounded-lg hover:opacity-90 shadow-md transition-all disabled:opacity-50"
                     >
                       {loading ? 'Processing...' : `Pay ₹${orderTotal}`}
                     </button>
@@ -370,13 +370,13 @@ export default function CheckoutPage() {
 
           {/* Right Column - Order Summary */}
           <div className="w-full lg:w-96 shrink-0">
-            <div className="bg-white/5 border border-white/10 p-6 rounded-2xl sticky top-28 backdrop-blur-sm">
-              <h2 className="text-xl font-bold uppercase tracking-wide mb-6">Order Summary</h2>
+            <div className="bg-white border border-gray-100 p-6 rounded-2xl sticky top-28 shadow-sm">
+              <h2 className="text-xl font-bold uppercase tracking-wide mb-6 text-black">Order Summary</h2>
               
               <div className="space-y-4 mb-6 max-h-[400px] overflow-y-auto pr-2">
                 {cart.map((item, idx) => (
                   <div key={idx} className="flex gap-4">
-                    <div className="w-20 h-24 bg-gradient-to-br from-purple-900/40 to-cyan-900/40 rounded border border-white/10 flex-shrink-0 overflow-hidden">
+                    <div className="w-20 h-24 bg-gray-100 rounded flex-shrink-0 overflow-hidden">
                       {item.image_url ? (
                         <img 
                           src={item.image_url.startsWith('http') ? item.image_url : `${API_BASE_URL}${item.image_url.startsWith('/') ? '' : '/'}${item.image_url}`} 
@@ -384,34 +384,34 @@ export default function CheckoutPage() {
                           className="w-full h-full object-cover" 
                         />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center text-xs text-white/20">IMG</div>
+                        <div className="w-full h-full flex items-center justify-center text-xs text-gray-400">IMG</div>
                       )}
                     </div>
                     <div className="flex-grow">
-                      <h3 className="font-bold text-sm text-white tracking-tight">{item.name}</h3>
+                      <h3 className="font-bold text-sm text-gray-800 tracking-tight">{item.name}</h3>
                       <div className="flex gap-2 mt-1">
-                        <span className="text-[10px] text-white/40 bg-white/5 px-1.5 py-0.5 rounded">S: {item.size}</span>
-                        <span className="text-[10px] text-white/40 bg-white/5 px-1.5 py-0.5 rounded">Q: {item.quantity}</span>
-                        {item.color && <span className="text-[10px] text-white/40 bg-white/5 px-1.5 py-0.5 rounded truncate max-w-[60px]">{item.color}</span>}
+                        <span className="text-[10px] text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">S: {item.size}</span>
+                        <span className="text-[10px] text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">Q: {item.quantity}</span>
+                        {item.color && <span className="text-[10px] text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded truncate max-w-[60px]">{item.color}</span>}
                       </div>
-                      <p className="font-bold text-xs mt-2 text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-cyan-400">₹{item.price}</p>
+                      <p className="font-bold text-xs mt-2 text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-indigo-600">₹{item.price}</p>
                     </div>
                   </div>
                 ))}
               </div>
               
-              <div className="border-t border-white/10 pt-4 space-y-3 text-sm">
-                <div className="flex justify-between text-white/70">
+              <div className="border-t border-gray-200 pt-4 space-y-3 text-sm">
+                <div className="flex justify-between text-gray-600">
                   <span>Subtotal</span>
                   <span>₹{orderTotal}</span>
                 </div>
-                <div className="flex justify-between text-white/70">
+                <div className="flex justify-between text-gray-600">
                   <span>Shipping</span>
-                  <span className="text-green-400">Free</span>
+                  <span className="text-green-600 font-medium">Free</span>
                 </div>
-                <div className="border-t border-white/10 pt-4 flex justify-between font-bold text-xl h-[40px] items-center">
+                <div className="border-t border-gray-200 pt-4 flex justify-between font-bold text-xl h-[40px] items-center text-black">
                   <span>Total</span>
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-cyan-400">₹{orderTotal}</span>
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-indigo-600">₹{orderTotal}</span>
                 </div>
               </div>
             </div>
