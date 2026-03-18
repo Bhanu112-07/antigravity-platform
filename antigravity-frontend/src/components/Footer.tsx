@@ -37,16 +37,16 @@ export default function Footer() {
           </ul>
         </div>
 
-        <div>
-          <h2 className="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-600 to-purple-600 uppercase tracking-tighter mb-4">
-            Designed By Bhanu
-          </h2>
-          <p className="text-sm italic leading-relaxed mb-4 font-medium text-black/50">
+        <div className="flex flex-col items-start">
+          <div className="mb-4 group cursor-default">
+            <span className="block text-4xl text-black leading-none" style={{ fontFamily: 'var(--font-logo)' }}>Designed By</span>
+            <span className="block text-xl font-black uppercase tracking-[0.5em] text-transparent bg-clip-text bg-gradient-to-r from-gray-900 to-gray-500 -mt-1 ml-1 group-hover:from-purple-600 group-hover:to-cyan-600 transition-all duration-500">BHANU</span>
+          </div>
+          <p className="text-xs italic leading-relaxed mb-6 font-medium text-black/40">
             "Innovation is the bridge between imagination and reality."
           </p>
-          <div className="pt-4 border-t border-black/5">
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-black/30">Developer Portfolio</p>
-            <p className="text-sm font-bold mt-1 tracking-tight">Full Stack Architecture & Design</p>
+          <div className="pt-4 border-t border-black/5 w-full">
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-black/30">Architecture & Design</p>
           </div>
         </div>
 
